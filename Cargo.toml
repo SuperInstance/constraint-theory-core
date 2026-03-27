@@ -6,30 +6,17 @@ rust-version = "1.75"
 description = "Deterministic manifold snapping with O(log n) KD-tree indexing — maps continuous vectors to exact Pythagorean coordinates"
 authors = ["SuperInstance Team"]
 license = "MIT"
-repository = "https://github.com/SuperInstance/Constraint-Theory"
+repository = "https://github.com/SuperInstance/constraint-theory-core"
 documentation = "https://docs.rs/constraint-theory-core"
-homepage = "https://constraint-theory.superinstance.ai"
+homepage = "https://github.com/SuperInstance/constraint-theory-core"
 readme = "README.md"
 keywords = ["geometry", "spatial-indexing", "kdtree", "pythagorean", "deterministic"]
 categories = ["algorithms", "mathematics", "science"]
 exclude = [
     "target/*",
     "examples/*",
-    "CHANGELOG.md",
-    "OPTIMIZATION_ROADMAP.md",
-    "PERFORMANCE_ANALYSIS_SUMMARY.md",
-    "PERFORMANCE_REPORT_ROUND_8.md",
-    "PROFILING_GUIDE.md",
-    "QUICK_REFERENCE.md",
-    "RELEASE_NOTES_v1.0.0.md",
-    "ROUND_*.md",
-    "TUTORIAL_ROUND_8.md",
     ".github/*",
     ".git/*",
-    ".gitignore",
-    ".cargo/*",
-    ".vscode/*",
-    ".idea/*",
 ]
 
 [dependencies]
