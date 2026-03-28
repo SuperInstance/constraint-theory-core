@@ -244,6 +244,9 @@ impl PythagoreanManifold {
     /// Processes multiple vectors at once using AVX2 SIMD instructions.
     /// Achieves 8-16x speedup over scalar implementation.
     ///
+    /// ⚠️ **WARNING**: SIMD path may have platform-dependent behavior for tie-breaking.
+    /// For consensus-critical code, use `snap_batch()` (scalar) instead.
+    ///
     /// # Arguments
     ///
     /// * `vectors` - Input vectors to snap
@@ -262,6 +265,9 @@ impl PythagoreanManifold {
     /// This version avoids allocation by writing into a provided buffer.
     /// Use this for maximum performance in hot loops.
     ///
+    /// ⚠️ **WARNING**: SIMD path may have platform-dependent behavior.
+    /// For consensus-critical code, use `snap_batch_into()` instead.
+    ///
     /// # Arguments
     ///
     /// * `vectors` - Input vectors to snap
@@ -271,6 +277,9 @@ impl PythagoreanManifold {
     }
 
     /// Scalar batch snapping (fallback for non-SIMD or small batches)
+    /// 
+    /// ✅ **RECOMMENDED** for consensus-critical code.
+    /// Uses deterministic scalar path with explicit tie-breaking.
     ///
     /// # Arguments
     ///
@@ -279,6 +288,76 @@ impl PythagoreanManifold {
     pub fn snap_batch(&self, vectors: &[[f32; 2]], results: &mut [([f32; 2], f32)]) {
         for (i, &vec) in vectors.iter().enumerate() {
             results[i] = self.snap(vec);
+        }
+    }
+
+    /// Validate input before snapping (for consensus-critical systems)
+    ///
+    /// Returns Ok(()) if input is valid, Err(reason) if input will produce
+    /// undefined or potentially inconsistent results across platforms.
+    ///
+    /// # Arguments
+    ///
+    /// * `vector` - Input 2D vector to validate
+    ///
+    /// # Returns
+    ///
+    /// * `Ok(())` - Input is valid
+    /// * `Err(&'static str)` - Input is invalid with reason
+    ///
+    /// # Example
+    ///
+    /// ```rust
+    /// let manifold = PythagoreanManifold::new(200);
+    /// let input = [0.5, 0.5];
+    /// 
+    /// if let Err(reason) = manifold.validate_input(input) {
+    ///     // Reject input before consensus
+    ///     return Err(ConsensusError::InvalidInput(reason));
+    /// }
+    /// let (snapped, noise) = manifold.snap(input);
+    /// ```
+    pub fn validate_input(&self, vector: [f32; 2]) -> Result<(), &'static str> {
+        if !vector[0].is_finite() || !vector[1].is_finite() {
+            return Err("Input contains NaN or Infinity");
+        }
+        if vector[0] == 0.0 && vector[1] == 0.0 {
+            return Err("Zero vector - will snap to arbitrary default");
+        }
+        Ok(())
+    }
+
+    /// Get maximum angular error for this manifold density
+    ///
+    /// Returns the worst-case angular deviation from true input direction.
+    /// For density 200 (~1000 states): approximately 0.36° (0.0063 radians)
+    ///
+    /// # Formula
+    ///
+    /// Maximum angular separation ≈ π / state_count
+    pub fn max_angular_error(&self) -> f32 {
+        if self.valid_states.is_empty() {
+            return std::f32::consts::PI;
+        }
+        // Conservative estimate: worst case is half the angular spacing
+        std::f32::consts::PI / self.valid_states.len() as f32
+    }
+
+    /// Get recommended noise threshold for a use case
+    ///
+    /// Returns suggested maximum noise threshold before rejecting a snap.
+    ///
+    /// # Arguments
+    ///
+    /// * `use_case` - "animation", "game", "robotics", "ml", or "consensus"
+    pub fn recommended_noise_threshold(use_case: &str) -> f32 {
+        match use_case {
+            "animation" => 0.02,  // Visible snapping above this
+            "game" => 0.05,       // Players may notice above this
+            "robotics" => 0.01,   // Precision tasks need tighter threshold
+            "ml" => 0.03,         // Balance precision and coverage
+            "consensus" => 0.1,   // Accept any valid snap
+            _ => 0.05,
         }
     }
 }

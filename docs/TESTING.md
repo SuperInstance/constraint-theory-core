@@ -310,6 +310,59 @@ fn test_full_pipeline() {
 }
 ```
 
+### Ecosystem Integration Tests
+
+#### Python Binding Compatibility
+
+The Rust core must produce identical results to the Python bindings:
+
+```rust
+// These values must match constraint-theory-python tests
+#[test]
+fn test_python_compatibility() {
+    let manifold = PythagoreanManifold::new(200);
+    
+    // Test vectors from Python test suite
+    let test_cases = vec![
+        ([0.577, 0.816], [0.6, 0.8]),   // 3-4-5
+        ([0.8, 0.6], [0.8, 0.6]),       // 4-3-5
+        ([0.28, 0.96], [0.28, 0.96]),   // 7-24-25
+    ];
+    
+    for (input, expected) in test_cases {
+        let (snapped, noise) = manifold.snap(input);
+        assert!((snapped[0] - expected[0]).abs() < 0.01);
+        assert!((snapped[1] - expected[1]).abs() < 0.01);
+        assert!(noise < 0.05);
+    }
+}
+```
+
+#### Cross-Platform Determinism
+
+```rust
+#[test]
+fn test_cross_platform_determinism() {
+    // All platforms must produce identical results
+    let manifold = PythagoreanManifold::new(200);
+    
+    // Test with values that might have edge-case behavior
+    let test_vectors = generate_edge_case_vectors(100);
+    
+    // Results should be byte-identical across platforms
+    for vector in test_vectors {
+        let (snapped, noise) = manifold.snap(vector);
+        
+        // Store hash for comparison across platforms
+        let hash = compute_result_hash(snapped, noise);
+        
+        // Expected hashes are pre-computed from reference platform
+        assert_eq!(hash, expected_hash_for(vector), 
+            "Non-deterministic result for {:?}", vector);
+    }
+}
+```
+
 ### Cross-Platform Testing
 
 Tests verify consistent behavior across:
@@ -318,6 +371,40 @@ Tests verify consistent behavior across:
 - macOS x86_64 (Intel)
 - macOS ARM64 (Apple Silicon)
 - Windows x86_64
+
+### SIMD Consistency Testing
+
+```rust
+#[test]
+fn test_simd_scalar_equivalence() {
+    let manifold = PythagoreanManifold::new(200);
+    let vectors = generate_random_vectors(1000);
+    
+    // Scalar path (reference)
+    let mut scalar_results = vec![([0.0, 0.0], 0.0f32); vectors.len()];
+    manifold.snap_batch(&vectors, &mut scalar_results);
+    
+    // SIMD path
+    let simd_results = manifold.snap_batch_simd(&vectors);
+    
+    // Compare each result
+    for (i, (scalar, simd)) in scalar_results.iter().zip(simd_results.iter()).enumerate() {
+        // Allow small tolerance for floating-point differences
+        assert!(
+            (scalar.0[0] - simd.0[0]).abs() < 0.001,
+            "SIMD X mismatch at index {}", i
+        );
+        assert!(
+            (scalar.0[1] - simd.0[1]).abs() < 0.001,
+            "SIMD Y mismatch at index {}", i
+        );
+        assert!(
+            (scalar.1 - simd.1).abs() < 0.001,
+            "SIMD noise mismatch at index {}", i
+        );
+    }
+}
+```
 
 ---
 

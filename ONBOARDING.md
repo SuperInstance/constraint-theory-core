@@ -2,8 +2,9 @@
 
 **Repository:** https://github.com/SuperInstance/constraint-theory-core
 **Language:** Rust
-**Version:** 0.2.0
+**Version:** 1.0.1
 **Last Updated:** 2025-01-27
+**Part of:** Grand Unified Constraint Theory (GUCT)
 
 ---
 
@@ -15,9 +16,10 @@ This repository contains the **core Rust implementation** of Constraint Theory -
 
 1. How to build and test the library
 2. Core concepts: manifolds, snapping, holonomy
-3. Using the PythagoreanQuantizer
-4. Implementing custom constraint solvers
-5. Contributing to the codebase
+3. Using the PythagoreanManifold API
+4. Understanding the hidden dimensions formula: k = ⌈log₂(1/ε)⌉
+5. Performance characteristics and benchmarking
+6. Contributing to the codebase
 
 ---
 
@@ -75,24 +77,25 @@ cargo run --example visualization
 cargo run --example bench
 ```
 
-### 4. Your First Constraint
+### 4. Your First Snap
 
 ```rust
-use constraint_theory::{PythagoreanManifold, Point2D};
+use constraint_theory_core::{PythagoreanManifold, snap};
 
 fn main() {
-    // Create a Pythagorean manifold
-    let manifold = PythagoreanManifold::new_2d();
+    // Create a Pythagorean manifold with density 200 (~1000 valid states)
+    let manifold = PythagoreanManifold::new(200);
     
-    // A point near the unit circle
-    let point = Point2D::new(0.6, 0.8);
+    // A point near the unit circle (noisy input)
+    let input = [0.577_f32, 0.816];
     
-    // Snap to nearest Pythagorean point
-    let snapped = manifold.snap(&point);
+    // Snap to nearest Pythagorean triple
+    let (snapped, noise) = snap(&manifold, input);
     
-    println!("Original: ({}, {})", point.x, point.y);
-    println!("Snapped:  ({}, {})", snapped.x, snapped.y);
-    println!("Distance: {}", point.distance_to(&snapped));
+    println!("Input:  ({}, {})", input[0], input[1]);
+    println!("Snapped: ({}, {})", snapped[0], snapped[1]);
+    println!("Noise:   {:.6}", noise);
+    // Output: Snapped: (0.6, 0.8) - the 3-4-5 triangle!
 }
 ```
 
@@ -100,115 +103,110 @@ fn main() {
 
 ## Core Concepts
 
-### 1. Constraint Manifold
+### 1. Pythagorean Manifold
 
-A **constraint manifold** is a surface in n-dimensional space where all constraints are satisfied. Constraint Theory provides exact representation of points on these manifolds.
+A **Pythagorean manifold** is a discrete set of points on the unit circle S¹ where each point corresponds to an exact Pythagorean triple (a/c, b/c) with a² + b² = c².
 
 ```rust
-use constraint_theory::ConstraintManifold;
+use constraint_theory_core::PythagoreanManifold;
 
-// Define a simple constraint: x² + y² = 1 (unit circle)
-let circle = ConstraintManifold::unit_circle();
+// Create a manifold with ~1000 valid Pythagorean states
+let manifold = PythagoreanManifold::new(200);
+println!("Manifold has {} exact states", manifold.state_count());
 
-// Check if a point satisfies constraints
-let on_circle = Point2D::new(0.6, 0.8);  // 0.36 + 0.64 = 1 ✓
-let off_circle = Point2D::new(0.5, 0.5); // 0.25 + 0.25 = 0.5 ✗
-
-assert!(circle.contains(&on_circle));
-assert!(!circle.contains(&off_circle));
+// Every state satisfies x² + y² = 1 EXACTLY
+let (snapped, noise) = manifold.snap([0.6, 0.8]);
+let mag_sq = snapped[0] * snapped[0] + snapped[1] * snapped[1];
+assert!((mag_sq - 1.0).abs() < 1e-6, "Exact unit norm!");
 ```
 
 ### 2. Pythagorean Snapping
 
-**Pythagorean snapping** projects any point to the nearest valid constraint-satisfying point using integer lattice geometry.
+**Pythagorean snapping** projects any unit vector to the nearest valid Pythagorean triple using O(log n) KD-tree lookup.
 
 ```rust
-use constraint_theory::{PythagoreanManifold, SnapConfig};
+use constraint_theory_core::{PythagoreanManifold, snap};
 
-let manifold = PythagoreanManifold::new_2d();
-let config = SnapConfig {
-    max_hypotenuse: 1000,  // Search up to c=1000
-    exact: true,           // Require exact representation
-};
+let manifold = PythagoreanManifold::new(200);
 
-// Snap a point to the lattice
-let point = Point2D::new(0.7, 0.7);  // Not on unit circle
-let snapped = manifold.snap_with_config(&point, &config);
+// Snap a point to the nearest valid state
+let input = [0.707_f32, 0.707];  // ~45 degrees, not exact
+let (snapped, noise) = snap(&manifold, input);
 
 // Result is a Pythagorean triple: (a/c, b/c) where a² + b² = c²
-// Example output: (3/5, 4/5) which is (0.6, 0.8)
-println!("Snapped to: {}", snapped);
+println!("Snapped to: ({:.4}, {:.4})", snapped[0], snapped[1]);
+println!("Noise: {:.6}", noise);
+// The noise tells you how far from the nearest exact state
 ```
 
-### 3. Hidden Dimensions
+### 3. Hidden Dimensions Formula
 
-**Hidden dimensions** encode precision logarithmically. For precision ε, you need k = ⌈log₂(1/ε)⌉ hidden dimensions.
+**Hidden dimensions** encode precision logarithmically as part of the Grand Unified Constraint Theory (GUCT). For precision ε, the required hidden dimension count is:
 
-```rust
-use constraint_theory::{HiddenDimensionEncoder, Precision};
-
-let encoder = HiddenDimensionEncoder::new(Precision::P10);  // 10 decimal places
-
-// Encode a point with hidden dimensions
-let point = vec![1.0, 2.0, 3.0];
-let lifted = encoder.lift(&point);
-
-// lifted has dimension = point.len() + hidden_dims
-println!("Original dimension: {}", point.len());
-println!("Lifted dimension: {}", lifted.len());  // +34 hidden dims for 1e-10 precision
-
-// After computation, project back
-let projected = encoder.project(&lifted);
 ```
+k = ⌈log₂(1/ε)⌉
+```
+
+This formula determines the number of additional dimensions needed to represent precision exactly:
+
+| Precision (ε) | k = ⌈log₂(1/ε)⌉ | Hidden Dims |
+|--------------|-----------------|-------------|
+| 1e-3 | ⌈9.97⌉ = 10 | 10 |
+| 1e-6 | ⌈19.93⌉ = 20 | 20 |
+| 1e-9 | ⌈29.90⌉ = 30 | 30 |
+| 1e-10 | ⌈33.22⌉ = 34 | 34 |
+
+**Mathematical Foundation:**
+
+For a constraint manifold M ⊂ Rⁿ, lifting to Rⁿ⁺ᵏ allows exact representation of:
+- Constraint satisfaction at the lifted level
+- Holonomy group structure for global consistency
+- Quantization noise bounds: d_g(v, σ(v)) < π/(2n)
+
+See the [research documentation](https://github.com/SuperInstance/constraint-theory-research) for formal proofs.
 
 ### 4. Holonomy
 
-**Holonomy** measures the consistency of constraint satisfaction around cycles. Zero holonomy = globally consistent.
+**Holonomy** measures the consistency of constraint satisfaction around cycles. Zero holonomy = globally consistent. This is implemented in the `cohomology` module for advanced use cases.
 
 ```rust
-use constraint_theory::{HolonomyChecker, ConstraintCycle};
+use constraint_theory_core::PythagoreanManifold;
 
-let checker = HolonomyChecker::new();
+// For standard usage, holonomy is automatically satisfied
+// by construction of the Pythagorean manifold
+let manifold = PythagoreanManifold::new(200);
 
-// Define a cycle of constraint operations
-let cycle = ConstraintCycle::new(vec![
-    ConstraintOp::Rotate { axis: Axis::Z, angle: PI/2.0 },
-    ConstraintOp::Rotate { axis: Axis::X, angle: PI/2.0 },
-    ConstraintOp::Rotate { axis: Axis::Z, angle: -PI/2.0 },
-]);
+// Every snap operation preserves exact constraint satisfaction
+let (v1, _) = manifold.snap([0.6, 0.8]);
+let (v2, _) = manifold.snap([0.8, 0.6]);
 
-// Check holonomy (should be identity for consistent constraints)
-let holonomy = checker.compute(&cycle);
+// Both are exact Pythagorean triples
+// v1² + v2² = 1.0 exactly for both
+```
 
-if holonomy.is_identity() {
-    println!("Constraints are globally consistent!");
-} else {
-    println!("Warning: Holonomy error = {}", holonomy.error());
+For advanced holonomy computations and cycle checking, see the `cohomology` module in the source code.
+
+### 5. SIMD Batch Processing
+
+For high-throughput applications, use SIMD batch processing:
+
+```rust
+use constraint_theory_core::PythagoreanManifold;
+
+let manifold = PythagoreanManifold::new(200);
+
+// Process multiple vectors at once with SIMD optimization
+let vectors = vec![[0.6, 0.8], [0.8, 0.6], [0.1, 0.99], [0.99, 0.1]];
+let results = manifold.snap_batch_simd(&vectors);
+
+for (snapped, noise) in results {
+    println!("Snapped: ({:.3}, {:.3}), Noise: {:.6}", snapped[0], snapped[1], noise);
 }
 ```
 
-### 5. PythagoreanQuantizer
+**Performance:** ~74 ns/op with SIMD vs ~100 ns/op for single operations.
 
-The **PythagoreanQuantizer** integrates TurboQuant, BitNet, PolarQuant, and QJL for constraint-aware quantization.
-
-```rust
-use constraint_theory::{PythagoreanQuantizer, QuantizationMode};
-
-// Create quantizer for LLM weights
-let quantizer = PythagoreanQuantizer::new(
-    QuantizationMode::Ternary,  // BitNet-style {-1, 0, 1}
-    1.58,                       // Bits per weight
-);
-
-// Quantize weights
-let weights = vec![0.5, -0.3, 0.9, -1.2, 0.0];
-let result = quantizer.quantize(&weights);
-
-println!("Original: {:?}", weights);
-println!("Quantized: {:?}", result.data);
-println!("Codes: {:?}", result.codes);  // {-1, 0, 1}
-println!("Sparsity: {}", result.sparsity());
-```
+**Note:** For consensus-critical code, use `snap_batch()` (scalar path) to ensure deterministic tie-breaking across platforms.
 
 ---
 
@@ -219,33 +217,31 @@ constraint-theory-core/
 ├── Cargo.toml              # Package manifest
 ├── src/
 │   ├── lib.rs              # Library entry point
-│   ├── manifold.rs         # Constraint manifold implementation
-│   ├── kdtree.rs           # KD-tree for fast lattice lookup
-│   ├── quantizer.rs        # PythagoreanQuantizer
-│   ├── holonomy.rs         # Holonomy computation
-│   ├── hidden_dims.rs      # Hidden dimension encoding
-│   ├── lattice/            # Lattice implementations
-│   │   ├── pythagorean.rs  # 2D Pythagorean lattice
-│   │   ├── hurwitz.rs      # 3D/4D quaternion lattice
-│   │   ├── e8.rs           # 8D E8 lattice
-│   │   └── leech.rs        # 24D Leech lattice
+│   ├── manifold.rs         # PythagoreanManifold implementation
+│   ├── kdtree.rs           # KD-tree for O(log n) lookup
+│   ├── cohomology.rs       # Sheaf cohomology (advanced)
+│   ├── curvature.rs        # Ricci flow evolution
+│   ├── gauge.rs            # Gauge theory operations
+│   ├── percolation.rs      # Rigidity percolation
+│   ├── tile.rs             # ConstraintBlock and Tile
 │   ├── simd.rs             # SIMD optimizations
-│   └── cuda/               # CUDA kernels (optional)
+│   └── edge_case_tests.rs  # Edge case coverage
 ├── examples/
 │   ├── basic.rs            # Getting started
-│   ├── quantization.rs     # Quantization examples
+│   ├── batch.rs            # Batch processing
 │   ├── robotics.rs         # Robotics application
-│   └── ml_integration.rs   # Machine learning
-├── tests/
-│   ├── test_manifold.rs    # Manifold tests
-│   ├── test_quantizer.rs   # Quantizer tests
-│   └── test_holonomy.rs    # Holonomy tests
+│   ├── ml_integration.rs   # Machine learning
+│   ├── simd.rs             # SIMD demo
+│   ├── bench.rs            # Performance benchmark
+│   └── visualization.rs    # Visual demo
 ├── docs/
 │   ├── TUTORIAL.md         # Extended tutorial
 │   ├── PERFORMANCE.md      # Performance guide
-│   └── API.md              # API reference
+│   ├── BENCHMARKS.md       # Benchmark results
+│   ├── TESTING.md          # Testing methodology
+│   └── DISCLAIMERS.md      # Important clarifications
 └── benches/
-    └── bench_snap.rs       # Benchmarks
+    └── (integrated in examples)
 ```
 
 ---
@@ -255,75 +251,60 @@ constraint-theory-core/
 ### PythagoreanManifold
 
 ```rust
+use constraint_theory_core::PythagoreanManifold;
+
 impl PythagoreanManifold {
-    /// Create a 2D Pythagorean manifold
-    pub fn new_2d() -> Self;
+    /// Create a Pythagorean manifold with specified density
+    /// Higher density = more valid states = finer angular resolution
+    pub fn new(density: usize) -> Self;
     
-    /// Create a 3D Hurwitz quaternion manifold
-    pub fn new_3d() -> Self;
+    /// Get the number of valid states in the manifold
+    pub fn state_count(&self) -> usize;
     
-    /// Create an N-dimensional manifold
-    pub fn new_nd(dimensions: usize) -> Self;
+    /// Get reference to all valid states
+    pub fn states(&self) -> &[[f32; 2]];
     
-    /// Snap a point to the nearest lattice point
-    pub fn snap(&self, point: &Point) -> Point;
+    /// Snap a vector to nearest Pythagorean triple (O(log n) via KD-tree)
+    /// Returns (snapped_vector, noise) where noise = 1 - resonance
+    pub fn snap(&self, vector: [f32; 2]) -> ([f32; 2], f32);
     
-    /// Snap with custom configuration
-    pub fn snap_with_config(&self, point: &Point, config: &SnapConfig) -> Point;
+    /// SIMD-optimized batch snapping
+    pub fn snap_batch_simd(&self, vectors: &[[f32; 2]]) -> Vec<([f32; 2], f32)>;
     
-    /// Find all lattice points within radius
-    pub fn within_radius(&self, center: &Point, radius: f64) -> Vec<Point>;
+    /// SIMD batch snapping with pre-allocated buffer
+    pub fn snap_batch_simd_into(&self, vectors: &[[f32; 2]], results: &mut [([f32; 2], f32)]);
     
-    /// Get the holonomy group of the manifold
-    pub fn holonomy_group(&self) -> HolonomyGroup;
+    /// Scalar batch snapping (deterministic, for consensus-critical code)
+    pub fn snap_batch(&self, vectors: &[[f32; 2]], results: &mut [([f32; 2], f32)]);
+    
+    /// Validate input for consensus-critical systems
+    pub fn validate_input(&self, vector: [f32; 2]) -> Result<(), &'static str>;
+    
+    /// Get maximum angular error for this density
+    pub fn max_angular_error(&self) -> f32;
+    
+    /// Get recommended noise threshold for a use case
+    pub fn recommended_noise_threshold(use_case: &str) -> f32;
 }
+
+/// Convenience function for snapping
+pub fn snap(manifold: &PythagoreanManifold, vector: [f32; 2]) -> ([f32; 2], f32);
 ```
 
-### PythagoreanQuantizer
+### PythagoreanTriple
 
 ```rust
-impl PythagoreanQuantizer {
-    /// Create a new quantizer with specified mode
-    pub fn new(mode: QuantizationMode, bits: f64) -> Self;
-    
-    /// Quantize data with constraint preservation
-    pub fn quantize(&self, data: &[f64]) -> QuantizationResult;
-    
-    /// Dequantize back to floating-point
-    pub fn dequantize(&self, result: &QuantizationResult) -> Vec<f64>;
-    
-    /// Build index for fast ANN search
-    pub fn build_index(&self, data: &[Vec<f64>]) -> QJLIndex;
-    
-    /// Fast nearest neighbor search
-    pub fn nearest_neighbors(&self, query: &[f64], k: usize) -> Vec<usize>;
-}
+use constraint_theory_core::manifold::PythagoreanTriple;
 
-pub enum QuantizationMode {
-    Ternary,  // BitNet: {-1, 0, 1}
-    Polar,    // PolarQuant: exact unit norm
-    Turbo,    // TurboQuant: near-optimal MSE
-    Hybrid,   // Auto-select
-}
-```
-
-### UniversalConstraintSolver
-
-```rust
-impl UniversalConstraintSolver {
-    /// Create a solver with specified precision
-    pub fn new(precision: f64) -> Self;
+impl PythagoreanTriple {
+    /// Create a new Pythagorean triple (a, b, c) where a² + b² = c²
+    pub fn new(a: f32, b: f32, c: f32) -> Self;
     
-    /// Solve constraint system
-    pub fn solve(&self, constraints: &[Constraint]) -> Solution;
+    /// Check if the triple satisfies a² + b² = c²
+    pub fn is_valid(&self) -> bool;
     
-    /// Compute hidden dimension count for precision
-    pub fn hidden_dim_count(&self) -> usize {
-        (1.0 / self.precision).log2().ceil() as usize
-    }
-    
-    /// Verify holonomy of solution
-    pub fn verify(&self, solution: &Solution) -> bool;
+    /// Convert to normalized 2D vector [a/c, b/c]
+    pub fn to_vector(&self) -> [f32; 2];
 }
 ```
 
@@ -331,70 +312,67 @@ impl UniversalConstraintSolver {
 
 ## Performance
 
-### Benchmarks (AMD Ryzen 9 7950X)
+### Benchmarks (Typical Results)
 
-| Operation | Time | Rate |
-|-----------|------|------|
-| 2D snap | 45ns | 22M/sec |
-| 3D snap (Hurwitz) | 120ns | 8.3M/sec |
-| 8D snap (E8) | 350ns | 2.9M/sec |
-| Ternary quantize (1K weights) | 2.1μs | 476M weights/sec |
-| ANN search (1M vectors, d=128) | 0.8ms | 1.25M queries/sec |
+| Operation | Time | Rate | Notes |
+|-----------|------|------|-------|
+| Single snap | ~100 ns | ~10M/sec | KD-tree O(log n) |
+| Batch SIMD (1000) | ~74 ns/op | ~13.5M/sec | AVX2 parallel |
+| Manifold build (density=200) | ~2.8 ms | - | One-time cost |
+| Memory usage (density=200) | ~80 KB | - | Linear with density |
+
+**Key insight:** KD-tree provides O(log n) vs O(n) brute force. At 1000 states, that's ~109x faster.
+
+See [docs/BENCHMARKS.md](./docs/BENCHMARKS.md) for detailed methodology.
 
 ### SIMD Optimization
 
 The library uses SIMD for batch operations:
 
-```rust
-// Enable SIMD (default in release mode)
+```bash
+# Build with SIMD (default in release mode)
 cargo build --release --features simd
 
-// Disable SIMD for debugging
-cargo build --no-default-features
+# SIMD is automatically used when:
+# 1. x86_64 architecture with AVX2
+# 2. Batch size >= 8 vectors
 ```
 
-### GPU Acceleration (Optional)
+### SIMD Warning
 
-```rust
-// Enable CUDA support
-cargo build --release --features cuda
-
-// Use GPU for large-scale operations
-let gpu_quantizer = PythagoreanQuantizer::gpu_new(QuantizationMode::Turbo, 4.0)?;
-let result = gpu_quantizer.quantize_batch(&large_matrix)?;
-```
+⚠️ **For consensus-critical code**, use the scalar `snap_batch()` instead of `snap_batch_simd()`:
+- SIMD may have platform-dependent tie-breaking
+- Scalar path ensures identical results across all platforms
 
 ---
 
 ## Integration Examples
 
-### With PyTorch (via constraint-theory-python)
+### With Python (via constraint-theory-python)
 
 ```python
-from constraint_theory import PythagoreanQuantizer, QuantizationMode
-import torch
+from constraint_theory import PythagoreanManifold
 
-# Quantize PyTorch weights
-weights = torch.randn(4096, 4096).numpy()
-quantizer = PythagoreanQuantizer(QuantizationMode.TERNARY, 1.58)
-result = quantizer.quantize(weights)
+# Create manifold
+manifold = PythagoreanManifold(density=200)
 
-# Back to PyTorch
-quantized_weights = torch.from_numpy(result.data)
+# Snap to nearest Pythagorean triple
+x, y, noise = manifold.snap(0.577, 0.816)
+print(f"Snapped: ({x}, {y})")  # (0.6, 0.8)
+
+# Batch snap
+results = manifold.snap_batch([[0.6, 0.8], [0.8, 0.6]])
 ```
 
-### With Games (via constraint-theory-web WASM)
+See [constraint-theory-python](https://github.com/SuperInstance/constraint-theory-python) for more.
+
+### With Web (via constraint-theory-web)
+
+See the [interactive demos](https://constraint-theory-web.pages.dev) for browser-based visualizations.
 
 ```javascript
-// In browser
-import init, { PythagoreanManifold } from 'constraint_theory';
-
-await init();
-const manifold = new PythagoreanManifold(2);  // 2D
-
-// Snap game coordinates to exact positions
-const snapped = manifold.snap(0.7, 0.7);
-console.log(snapped.x, snapped.y);  // 0.6, 0.8 (3-4-5 triangle)
+// Example: KD-tree visualization
+// https://constraint-theory-web.pages.dev/simulators/kdtree/
 ```
 
 ---
@@ -407,16 +385,13 @@ console.log(snapped.x, snapped.y);  // 0.6, 0.8 (3-4-5 triangle)
 # Unit tests
 cargo test
 
-# Benchmarks
-cargo bench
-
-# Examples
+# Run examples
 cargo run --example basic
-cargo run --example quantization
+cargo run --example batch
 cargo run --example robotics
 
-# GPU tests (if CUDA available)
-cargo test --features cuda
+# Performance benchmark
+cargo run --release --example bench
 ```
 
 ### Write Your Own Tests
@@ -427,14 +402,14 @@ mod tests {
     use super::*;
     
     #[test]
-    fn test_my_constraint() {
-        let manifold = PythagoreanManifold::new_2d();
-        let point = Point2D::new(0.5, 0.5);
-        let snapped = manifold.snap(&point);
+    fn test_my_snap() {
+        let manifold = PythagoreanManifold::new(200);
+        let (snapped, noise) = manifold.snap([0.6, 0.8]);
         
-        // Verify on unit circle
-        let r2 = snapped.x * snapped.x + snapped.y * snapped.y;
-        assert!((r2 - 1.0).abs() < 1e-10);
+        // Verify exact unit norm
+        let mag_sq = snapped[0] * snapped[0] + snapped[1] * snapped[1];
+        assert!((mag_sq - 1.0).abs() < 1e-6);
+        assert!(noise < 0.001);
     }
 }
 ```
@@ -504,41 +479,40 @@ cargo test && cargo clippy && cargo fmt -- --check
 
 ### Common Issues
 
-**1. Precision Loss**
+**1. High Noise Values**
 ```
-Problem: Snapping gives unexpected results
-Solution: Check your precision requirements
-```
-```rust
-// Use higher precision configuration
-let config = SnapConfig {
-    max_hypotenuse: 10000,  // Increase search range
-    exact: true,
-};
-```
-
-**2. Holonomy Errors**
-```
-Problem: Constraints satisfied locally but not globally
-Solution: Check constraint cycle holonomy
+Problem: Snapping gives unexpectedly high noise
+Solution: Ensure input is a direction (will be normalized internally)
 ```
 ```rust
-let checker = HolonomyChecker::new();
-let error = checker.compute(&cycle).error();
-if error > 1e-10 {
-    println!("Constraints are over-constrained. Remove some constraints.");
+// The snap function normalizes internally, but check your inputs
+let (snapped, noise) = manifold.snap([0.6, 0.8]);
+if noise > 0.1 {
+    println!("Warning: High quantization noise = {:.4}", noise);
 }
 ```
 
-**3. Memory Issues**
+**2. SIMD Inconsistency Across Platforms**
 ```
-Problem: Out of memory with large lattices
-Solution: Use on-demand lattice generation
+Problem: Different results on different machines
+Solution: Use scalar path for consensus-critical code
 ```
 ```rust
-let manifold = PythagoreanManifold::new_2d_lazy();
-// Lattice points generated on demand, not precomputed
+// For consensus-critical code:
+let mut results = vec![([0.0, 0.0], 0.0f32); vectors.len()];
+manifold.snap_batch(&vectors, &mut results);  // Scalar, deterministic
 ```
+
+**3. Memory with Large Densities**
+```
+Problem: Memory usage too high
+Solution: Use lower density (memory scales linearly)
+```
+| Density | States | Memory |
+|---------|--------|--------|
+| 200 | ~1000 | ~80 KB |
+| 500 | ~2500 | ~200 KB |
+| 1000 | ~5000 | ~400 KB |
 
 ---
 
@@ -546,21 +520,25 @@ let manifold = PythagoreanManifold::new_2d_lazy();
 
 ### Documentation
 
-- [API Reference](./docs/API.md)
-- [Tutorial](./docs/TUTORIAL.md)
-- [Performance Guide](./docs/PERFORMANCE.md)
-- [Benchmarks](./docs/BENCHMARKS.md)
+- [Tutorial](./docs/TUTORIAL.md) - Step-by-step guide
+- [Performance Guide](./docs/PERFORMANCE.md) - Optimization tips
+- [Benchmarks](./docs/BENCHMARKS.md) - Detailed methodology
+- [Testing Guide](./docs/TESTING.md) - Testing methodology
 
-### External
+### Ecosystem
 
-- [Grand Unified Constraint Theory](../research/GRAND_UNIFIED_CONSTRAINT_THEORY.md)
-- [Unified Quantization System](../research/UNIFIED_QUANTIZATION_SYSTEM.md)
-- [Research Summary](../research/RESEARCH_SUMMARY_10_ITERATIONS.md)
+| Repo | Description |
+|------|-------------|
+| [constraint-theory-core](https://github.com/SuperInstance/constraint-theory-core) | This repo - Rust crate |
+| [constraint-theory-python](https://github.com/SuperInstance/constraint-theory-python) | Python bindings |
+| [constraint-theory-web](https://github.com/SuperInstance/constraint-theory-web) | 49 interactive demos |
+| [constraint-theory-research](https://github.com/SuperInstance/constraint-theory-research) | Mathematical foundations |
 
-### Community
+### Research
 
-- GitHub Issues: Bug reports and feature requests
-- GitHub Discussions: Questions and ideas
+- [Mathematical Foundations Deep Dive](https://github.com/SuperInstance/constraint-theory-research/blob/main/MATHEMATICAL_FOUNDATIONS_DEEP_DIVE.md)
+- [Theoretical Guarantees](https://github.com/SuperInstance/constraint-theory-research/blob/main/guides/THEORETICAL_GUARANTEES.md)
+- [arXiv Paper](https://arxiv.org/abs/2503.15847)
 
 ---
 

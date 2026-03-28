@@ -249,6 +249,12 @@ let (quantized, _) = manifold.snap(project_to_2d(&embedding));
 
 **The insight:** There are infinitely many Pythagorean triples, but only finitely many within any precision bound. We precompute them, index them, and snap your noisy floats to the nearest exact state.
 
+**Hidden dimensions formula (GUCT):** For precision ε, the required hidden dimension count is:
+```
+k = ⌈log₂(1/ε)⌉
+```
+This determines the manifold's representational capacity for exact constraint satisfaction.
+
 ---
 
 ## ⚠️ Limitations (Read Before Using)
@@ -275,12 +281,33 @@ let (quantized, _) = manifold.snap(project_to_2d(&embedding));
 
 ## 🌟 The Ecosystem
 
-| Repo | What It Is |
-|------|------------|
-| **[constraint-theory-core](https://github.com/SuperInstance/constraint-theory-core)** | This crate — Rust, zero deps |
-| **[constraint-theory-python](https://github.com/SuperInstance/constraint-theory-python)** | Python bindings (PyO3) |
-| **[constraint-theory-web](https://github.com/SuperInstance/constraint-theory-web)** | 49 interactive demos |
-| **[constraint-theory-research](https://github.com/SuperInstance/constraint-theory-research)** | Mathematical foundations |
+| Repo | What It Is | Key Features |
+|------|------------|-------------|
+| **[constraint-theory-core](https://github.com/SuperInstance/constraint-theory-core)** | This crate — Rust, zero deps | O(log n) KD-tree, SIMD batch |
+| **[constraint-theory-python](https://github.com/SuperInstance/constraint-theory-python)** | Python bindings (PyO3) | NumPy integration, PyTorch compatible |
+| **[constraint-theory-web](https://github.com/SuperInstance/constraint-theory-web)** | 50 interactive demos | KD-tree visualizer, Pythagorean demo |
+| **[constraint-theory-research](https://github.com/SuperInstance/constraint-theory-research)** | Mathematical foundations | arXiv paper, proofs, open problems |
+| **[constraint-ranch](https://github.com/SuperInstance/constraint-ranch)** | Educational game demos | Puzzle games, species simulation |
+
+### Cross-Repository Links
+
+**From Rust to Python:**
+```python
+# constraint-theory-python
+from constraint_theory import PythagoreanManifold
+manifold = PythagoreanManifold(density=200)  # Same API
+x, y, noise = manifold.snap(0.577, 0.816)   # Same results
+```
+
+**Interactive Demos:**
+- [Pythagorean Snapping Demo](https://constraint-theory-web.pages.dev/simulators/pythagorean/)
+- [KD-Tree Visualization](https://constraint-theory-web.pages.dev/simulators/kdtree/)
+- [Swarm Behavior Demo](https://constraint-theory-web.pages.dev/simulators/swarm/)
+
+**Research Papers:**
+- [Mathematical Foundations (45 pages)](https://github.com/SuperInstance/constraint-theory-research/blob/main/MATHEMATICAL_FOUNDATIONS_DEEP_DIVE.md)
+- [Theoretical Guarantees](https://github.com/SuperInstance/constraint-theory-research/blob/main/guides/THEORETICAL_GUARANTEES.md)
+- [arXiv:2503.15847](https://arxiv.org/abs/2503.15847)
 
 ---
 
@@ -312,7 +339,7 @@ cargo bench   # see the numbers yourself
   author={SuperInstance},
   year={2025},
   url={https://github.com/SuperInstance/constraint-theory-core},
-  version={0.1.0}
+  version={1.0.1}
 }
 ```
 

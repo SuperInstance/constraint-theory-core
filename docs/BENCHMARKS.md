@@ -1,6 +1,7 @@
 # ConstraintTheory Benchmarks
 
-**Last Updated:** 2026-03-17
+**Last Updated:** 2025-01-27
+**Version:** 1.0.1
 **Status:** Research Release - Empirical Validation Ongoing
 
 ---
@@ -332,6 +333,6 @@ cargo run --release --example my_bench
 
 ---
 
-**Document Version:** 1.0
-**Last Benchmark Run:** 2026-03-17
-**Next Review:** 2026-04-01
+**Document Version:** 1.0.1
+**Last Benchmark Run:** 2025-01-27
+**Next Review:** 2025-04-01

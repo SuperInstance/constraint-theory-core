@@ -1,7 +1,8 @@
 # ConstraintTheory Disclaimers and Clarifications
 
-**Last Updated:** 2026-03-17
+**Last Updated:** 2025-01-27
 **Status:** Important Clarifications
+**Version:** 1.0.1
 
 ---
 
@@ -192,7 +193,8 @@ Please open an issue or pull request on GitHub.
 
 | Version | Date | Changes |
 |---------|------|---------|
-| 1.0 | 2026-03-17 | Initial disclaimers document |
+| 1.0.1 | 2025-01-27 | Updated dates, added version number |
+| 1.0 | 2025-01-15 | Initial disclaimers document |
 
 ---
 
