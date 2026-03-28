@@ -275,6 +275,8 @@ This determines the manifold's representational capacity for exact constraint sa
 | **[constraint-theory-web](https://github.com/SuperInstance/constraint-theory-web)** | 50 interactive demos | KD-tree visualizer, Pythagorean demo |
 | **[constraint-theory-research](https://github.com/SuperInstance/constraint-theory-research)** | Mathematical foundations | arXiv paper, proofs, open problems |
 | **[constraint-ranch](https://github.com/SuperInstance/constraint-ranch)** | Educational game demos | Puzzle games, species simulation |
+| **[constraint-flow](https://github.com/SuperInstance/constraint-flow)** | Business automation | Exact financial calculations, workflow orchestration |
+| **[constraint-theory-agent](https://github.com/SuperInstance/constraint-theory-agent)** | Implementation agent | Code audit, refactoring, expert explanations |
 
 ### Cross-Repository Links
 

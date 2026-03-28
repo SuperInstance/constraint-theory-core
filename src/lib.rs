@@ -163,6 +163,12 @@ pub use tile::{ConstraintBlock, Origin, Tile};
 /// This enum represents all possible errors that can occur during
 /// constraint theory operations. All fallible operations return `CTResult<T>`.
 ///
+/// # Error Categories
+///
+/// - **Input Validation**: `NaNInput`, `InfinityInput`, `ZeroVector`, `InvalidDimension`
+/// - **State Errors**: `ManifoldEmpty`, `BufferSizeMismatch`
+/// - **Numerical**: `NumericalInstability`, `Overflow`, `DivisionByZero`
+///
 /// # Example
 ///
 /// ```
@@ -191,18 +197,30 @@ pub enum CTErr {
     InfinityInput,
     /// Batch size mismatch - input and output buffers have different lengths
     BufferSizeMismatch,
+    /// Numerical overflow detected - value exceeds f32::MAX
+    Overflow,
+    /// Division by zero attempted
+    DivisionByZero,
+    /// Invalid density parameter - must be positive
+    InvalidDensity,
+    /// Threshold out of valid range
+    InvalidThreshold,
 }
 
 impl std::fmt::Display for CTErr {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Self::InvalidDimension => write!(f, "Invalid input dimension - expected 2D vector"),
-            Self::ManifoldEmpty => write!(f, "Manifold is empty - initialize with new()"),
-            Self::NumericalInstability => write!(f, "Numerical instability detected"),
-            Self::ZeroVector => write!(f, "Input vector is zero length - cannot normalize"),
-            Self::NaNInput => write!(f, "Input contains NaN values"),
-            Self::InfinityInput => write!(f, "Input contains Infinity values"),
-            Self::BufferSizeMismatch => write!(f, "Input and output buffers have different lengths"),
+            Self::InvalidDimension => write!(f, "Invalid input dimension - expected 2D vector. Provide input as [x, y] where both are finite numbers."),
+            Self::ManifoldEmpty => write!(f, "Manifold is empty - initialize with new() before performing operations."),
+            Self::NumericalInstability => write!(f, "Numerical instability detected - input values may cause precision loss. Consider normalizing input vectors."),
+            Self::ZeroVector => write!(f, "Input vector is zero length - cannot normalize. Provide a non-zero vector [x, y]."),
+            Self::NaNInput => write!(f, "Input contains NaN values. Ensure all input values are valid numbers."),
+            Self::InfinityInput => write!(f, "Input contains Infinity values. Ensure all input values are finite."),
+            Self::BufferSizeMismatch => write!(f, "Input and output buffers have different lengths. Ensure buffers are pre-allocated with matching sizes."),
+            Self::Overflow => write!(f, "Numerical overflow detected - computed value exceeds f32::MAX. Consider scaling down input values."),
+            Self::DivisionByZero => write!(f, "Division by zero attempted - this is an internal error. Please report this issue."),
+            Self::InvalidDensity => write!(f, "Invalid density parameter - must be a positive integer. Recommended range: 50-500."),
+            Self::InvalidThreshold => write!(f, "Invalid threshold - must be between 0.0 and 1.0 inclusive."),
         }
     }
 }
@@ -342,5 +360,22 @@ mod tests {
         assert!(!CTErr::NaNInput.to_string().is_empty());
         assert!(!CTErr::InfinityInput.to_string().is_empty());
         assert!(!CTErr::BufferSizeMismatch.to_string().is_empty());
+        assert!(!CTErr::Overflow.to_string().is_empty());
+        assert!(!CTErr::DivisionByZero.to_string().is_empty());
+        assert!(!CTErr::InvalidDensity.to_string().is_empty());
+        assert!(!CTErr::InvalidThreshold.to_string().is_empty());
+    }
+
+    #[test]
+    fn test_cterr_actionable_messages() {
+        // Verify error messages contain actionable guidance
+        let zero_msg = CTErr::ZeroVector.to_string();
+        assert!(zero_msg.contains("Provide"), "Error message should suggest action");
+        
+        let nan_msg = CTErr::NaNInput.to_string();
+        assert!(nan_msg.contains("Ensure"), "Error message should suggest action");
+        
+        let density_msg = CTErr::InvalidDensity.to_string();
+        assert!(density_msg.contains("Recommended"), "Error message should provide guidance");
     }
 }

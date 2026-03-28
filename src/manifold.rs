@@ -11,6 +11,7 @@
 
 use crate::kdtree::KDTree;
 use crate::simd::snap_batch_simd;
+use crate::{CTErr, CTResult};
 
 /// A Pythagorean triple (a, b, c) where a² + b² = c²
 ///
@@ -325,6 +326,134 @@ impl PythagoreanManifold {
             return Err("Zero vector - will snap to arbitrary default");
         }
         Ok(())
+    }
+
+    /// Snap a vector with explicit error handling (for consensus-critical systems)
+    ///
+    /// Unlike `snap()`, this method returns a `Result` type and will reject
+    /// invalid inputs rather than returning a fallback value.
+    ///
+    /// # Arguments
+    ///
+    /// * `vector` - Input 2D vector to snap
+    ///
+    /// # Returns
+    ///
+    /// * `Ok((snapped, noise))` - Successful snap with result
+    /// * `Err(CTErr::NaNInput)` - Input contains NaN
+    /// * `Err(CTErr::InfinityInput)` - Input contains Infinity
+    /// * `Err(CTErr::ZeroVector)` - Input is zero vector
+    ///
+    /// # Example
+    ///
+    /// ```rust
+    /// use constraint_theory_core::PythagoreanManifold;
+    ///
+    /// let manifold = PythagoreanManifold::new(200);
+    ///
+    /// // Valid input
+    /// let result = manifold.snap_checked([0.6, 0.8]);
+    /// assert!(result.is_ok());
+    ///
+    /// // Invalid input (NaN)
+    /// let result = manifold.snap_checked([f32::NAN, 0.5]);
+    /// assert!(result.is_err());
+    /// ```
+    pub fn snap_checked(&self, vector: [f32; 2]) -> CTResult<([f32; 2], f32)> {
+        // Detailed validation with specific error types
+        if vector[0].is_nan() || vector[1].is_nan() {
+            return Err(CTErr::NaNInput);
+        }
+        if vector[0].is_infinite() || vector[1].is_infinite() {
+            return Err(CTErr::InfinityInput);
+        }
+        if vector[0] == 0.0 && vector[1] == 0.0 {
+            return Err(CTErr::ZeroVector);
+        }
+        
+        // Perform the snap
+        Ok(self.snap(vector))
+    }
+
+    /// Batch snap with explicit error handling
+    ///
+    /// Validates all inputs before processing and returns an error if any
+    /// input is invalid. For partial success, use `snap_batch_partial`.
+    ///
+    /// # Arguments
+    ///
+    /// * `vectors` - Input vectors to snap
+    /// * `results` - Output buffer (must have same length as vectors)
+    ///
+    /// # Returns
+    ///
+    /// * `Ok(())` - All vectors snapped successfully
+    /// * `Err(CTErr::BufferSizeMismatch)` - Buffer size mismatch
+    /// * `Err(CTErr::NaNInput)` - One or more inputs contain NaN
+    /// * `Err(CTErr::InfinityInput)` - One or more inputs contain Infinity
+    pub fn snap_batch_checked(
+        &self,
+        vectors: &[[f32; 2]],
+        results: &mut [([f32; 2], f32)],
+    ) -> CTResult<()> {
+        if vectors.len() != results.len() {
+            return Err(CTErr::BufferSizeMismatch);
+        }
+
+        // Validate all inputs first
+        for (i, vec) in vectors.iter().enumerate() {
+            if vec[0].is_nan() || vec[1].is_nan() {
+                return Err(CTErr::NaNInput);
+            }
+            if vec[0].is_infinite() || vec[1].is_infinite() {
+                return Err(CTErr::InfinityInput);
+            }
+        }
+
+        // Process all vectors
+        for (i, &vec) in vectors.iter().enumerate() {
+            results[i] = self.snap(vec);
+        }
+
+        Ok(())
+    }
+
+    /// Batch snap with partial success reporting
+    ///
+    /// Processes all valid vectors and reports which ones failed validation.
+    /// Invalid inputs are snapped to the default ([1.0, 0.0], 0.0) with noise=1.0.
+    ///
+    /// # Returns
+    ///
+    /// Vector of (index, error) tuples for inputs that failed validation.
+    pub fn snap_batch_partial(
+        &self,
+        vectors: &[[f32; 2]],
+        results: &mut [([f32; 2], f32)],
+    ) -> Vec<(usize, CTErr)> {
+        let mut errors = Vec::new();
+
+        if vectors.len() != results.len() {
+            errors.push((0, CTErr::BufferSizeMismatch));
+            return errors;
+        }
+
+        for (i, &vec) in vectors.iter().enumerate() {
+            if vec[0].is_nan() || vec[1].is_nan() {
+                results[i] = ([1.0, 0.0], 1.0);
+                errors.push((i, CTErr::NaNInput));
+            } else if vec[0].is_infinite() || vec[1].is_infinite() {
+                results[i] = ([1.0, 0.0], 1.0);
+                errors.push((i, CTErr::InfinityInput));
+            } else if vec[0] == 0.0 && vec[1] == 0.0 {
+                results[i] = ([1.0, 0.0], 0.0);
+                // Zero vector is a soft error - don't report
+            } else {
+                results[i] = self.snap(vec);
+            }
+        }
+
+        errors
     }
 
     /// Get maximum angular error for this manifold density
