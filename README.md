@@ -202,19 +202,6 @@ let (quantized, _) = manifold.snap(project_to_2d(&embedding));
 
 ---
 
-## 💬 What People Are Saying
-
-> "Finally, a solution to the floating-point nightmare. Every game dev needs this."
-> — *Game Developer, 15 years in multiplayer systems*
-
-> "We spent weeks debugging a simulation that gave different results on CI. Constraint Theory fixed it in an afternoon."
-> — *ML Engineer, HFT firm*
-
-> "The 100ns lookup time means we can use this in real-time robotics with zero latency penalty."
-> — *Robotics Engineer, autonomous vehicles*
-
----
-
 ## 🔬 The Clever Bits (How It Works)
 
 ```
