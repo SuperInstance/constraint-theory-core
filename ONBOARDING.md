@@ -219,6 +219,9 @@ constraint-theory-core/
 │   ├── lib.rs              # Library entry point
 │   ├── manifold.rs         # PythagoreanManifold implementation
 │   ├── kdtree.rs           # KD-tree for O(log n) lookup
+│   ├── hidden_dimensions.rs # Hidden dimension encoding (GUCT)
+│   ├── quantizer.rs        # PythagoreanQuantizer (TurboQuant/BitNet/PolarQuant)
+│   ├── holonomy.rs         # Holonomy verification for constraint consistency
 │   ├── cohomology.rs       # Sheaf cohomology (advanced)
 │   ├── curvature.rs        # Ricci flow evolution
 │   ├── gauge.rs            # Gauge theory operations
@@ -306,6 +309,73 @@ impl PythagoreanTriple {
     /// Convert to normalized 2D vector [a/c, b/c]
     pub fn to_vector(&self) -> [f32; 2];
 }
+```
+
+### Hidden Dimensions
+
+The hidden dimensions module implements the Grand Unified Constraint Theory (GUCT) approach to exact constraint satisfaction.
+
+```rust
+use constraint_theory_core::{hidden_dim_count, holographic_accuracy, HiddenDimensionConfig};
+
+// Compute hidden dimensions for precision ε: k = ⌈log₂(1/ε)⌉
+let k = hidden_dim_count(1e-10);
+assert_eq!(k, 34);
+
+// Compute holographic accuracy
+let accuracy = holographic_accuracy(10, 12);
+
+// Use config for encoding
+let config = HiddenDimensionConfig::new(1e-6);
+let encoded = config.encode(&[0.6, 0.8]);
+```
+
+### PythagoreanQuantizer
+
+Unified quantization with constraint preservation, integrating TurboQuant, BitNet, and PolarQuant technologies.
+
+```rust
+use constraint_theory_core::{PythagoreanQuantizer, QuantizationMode};
+
+// Create quantizer for different use cases
+let llm_quantizer = PythagoreanQuantizer::for_llm();     // Ternary {-1, 0, 1}
+let embed_quantizer = PythagoreanQuantizer::for_embeddings(); // Polar, unit norm
+let db_quantizer = PythagoreanQuantizer::for_vector_db();     // Turbo, near-optimal
+
+// Quantize with constraint preservation
+let vector = vec![0.6, 0.8, 0.0, 0.0];
+let result = embed_quantizer.quantize(&vector);
+
+// Result preserves unit norm exactly
+assert!(result.unit_norm_preserved);
+```
+
+**Quantization Modes:**
+| Mode | Description | Best For |
+|------|-------------|----------|
+| Ternary | {-1, 0, 1} values | LLM weights, sparse data |
+| Polar | Exact unit norm | Embeddings, direction vectors |
+| Turbo | Near-optimal distortion | Vector databases, general |
+| Hybrid | Auto-select | Unknown input characteristics |
+
+### Holonomy Verification
+
+Holonomy measures constraint consistency around cycles. Zero holonomy = globally consistent.
+
+```rust
+use constraint_theory_core::{compute_holonomy, verify_holonomy, HolonomyChecker};
+
+// Compute holonomy for a cycle of transformations
+let result = compute_holonomy(&cycle);
+if result.is_identity() {
+    println!("Constraints are globally consistent");
+}
+
+// Use incremental checker for complex cycles
+let mut checker = HolonomyChecker::default_tolerance();
+checker.apply(&rotation1);
+checker.apply(&rotation2);
+let final_result = checker.check_closed();
 ```
 
 ---

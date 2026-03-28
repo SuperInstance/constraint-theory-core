@@ -1,12 +1,19 @@
 //! Constraint Theory Core - High-Performance Geometric Engine
 //!
 //! This crate provides the core mathematical operations for the SuperInstance
-//! Constraint Theory system, including:
-//! - Pythagorean snapping (Phi-Folding Operator)
-//! - Ricci flow evolution
-//! - Holonomy transport
-//! - Sheaf cohomology
-//! - Rigidity percolation
+//! Constraint Theory system, implementing the Grand Unified Constraint Theory (GUCT).
+//!
+//! # Modules
+//!
+//! | Module | Description |
+//! |--------|-------------|
+//! | [`manifold`] | Pythagorean snapping with O(log N) KD-tree lookup |
+//! | [`hidden_dimensions`] | Exact encoding via k = ⌈log₂(1/ε)⌉ formula |
+//! | [`quantizer`] | Constraint-preserving quantization (TurboQuant, BitNet, PolarQuant) |
+//! | [`holonomy`] | Consistency verification around cycles |
+//! | [`cache`] | Thread-safe lattice caching for performance |
+//! | [`kdtree`] | Spatial indexing for fast nearest neighbor queries |
+//! | [`simd`] | SIMD-optimized batch processing (AVX2) |
 //!
 //! # Core Concepts
 //!
@@ -23,11 +30,25 @@
 //! k = ⌈log₂(1/ε)⌉
 //! ```
 //!
+//! This formula determines the additional dimensions needed to represent
+//! constraints exactly without floating-point errors.
+//!
+//! ## Quantization Modes
+//!
+//! The `PythagoreanQuantizer` supports multiple quantization modes:
+//! - **Ternary (BitNet)**: {-1, 0, 1} for LLM weights, 16x memory reduction
+//! - **Polar (PolarQuant)**: Exact unit norm preservation for embeddings
+//! - **Turbo (TurboQuant)**: Near-optimal distortion for vector databases
+//! - **Hybrid**: Auto-select mode based on input characteristics
+//!
 //! # Performance
 //!
-//! - Target: <100ns per tile operation
-//! - SIMD: AVX2/AVX-512 for x86_64, NEON for ARM
-//! - Memory: Zero-allocation hot paths
+//! | Operation | Complexity | Notes |
+//! |-----------|------------|-------|
+//! | Single snap | O(log N) | KD-tree lookup |
+//! | Batch snap | O(n log N) | SIMD optimized |
+//! | Holonomy check | O(n²) | Spectral method |
+//! | Lattice cache | O(1) | Thread-safe |
 //!
 //! # Example
 //!
@@ -38,6 +59,35 @@
 //! let vec = [0.6f32, 0.8];
 //! let (snapped, noise) = snap(&manifold, vec);
 //! assert!(noise < 0.01);
+//! ```
+//!
+//! # Hidden Dimensions Example
+//!
+//! ```
+//! use constraint_theory_core::hidden_dimensions::{hidden_dim_count, lift_to_hidden};
+//!
+//! // Compute hidden dimensions for precision 1e-10
+//! let k = hidden_dim_count(1e-10);
+//! assert_eq!(k, 34);
+//!
+//! // Lift a point to higher dimensions
+//! let point = vec![0.6, 0.8];
+//! let lifted = lift_to_hidden(&point, k);
+//! assert_eq!(lifted.len(), 36); // 2 visible + 34 hidden
+//! ```
+//!
+//! # Quantization Example
+//!
+//! ```
+//! use constraint_theory_core::quantizer::{PythagoreanQuantizer, QuantizationMode};
+//!
+//! // Create a quantizer for embeddings (unit norm preservation)
+//! let quantizer = PythagoreanQuantizer::for_embeddings();
+//! let vector = vec![0.6, 0.8, 0.0, 0.0];
+//! let result = quantizer.quantize(&vector);
+//!
+//! // Verify unit norm is preserved
+//! assert!(result.check_unit_norm(0.1));
 //! ```
 //!
 //! # SIMD Batch Processing
@@ -79,12 +129,16 @@
 #![warn(unused_extern_crates)]
 #![warn(clippy::all)]
 
+pub mod cache;
 pub mod cohomology;
 pub mod curvature;
 pub mod gauge;
+pub mod hidden_dimensions;
+pub mod holonomy;
 pub mod kdtree;
 pub mod manifold;
 pub mod percolation;
+pub mod quantizer;
 pub mod simd;
 pub mod tile;
 
@@ -92,9 +146,16 @@ pub mod tile;
 mod edge_case_tests;
 
 // Re-export key types
+pub use cache::{CachedLattice, LatticeCache, global_cache, clear_global_cache};
 pub use curvature::{ricci_flow_step, RicciFlow};
+pub use hidden_dimensions::{
+    hidden_dim_count, holographic_accuracy, lift_to_hidden, precision_from_hidden_dims,
+    project_to_visible, HiddenDimensionConfig,
+};
+pub use holonomy::{compute_holonomy, verify_holonomy, HolonomyChecker, HolonomyResult};
 pub use manifold::{snap, PythagoreanManifold, PythagoreanTriple};
 pub use percolation::{FastPercolation, RigidityResult};
+pub use quantizer::{PythagoreanQuantizer, QuantizationMode, QuantizationResult, Rational};
 pub use tile::{ConstraintBlock, Origin, Tile};
 
 /// Core error type for constraint theory operations
