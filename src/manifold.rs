@@ -193,7 +193,18 @@ impl PythagoreanManifold {
     /// # Returns
     ///
     /// Tuple of (snapped_vector, noise) where noise is 1 - resonance
+    ///
+    /// # Edge Cases
+    ///
+    /// - Zero vector: Returns ([1.0, 0.0], 0.0)
+    /// - NaN/Infinity: Returns ([1.0, 0.0], 1.0) as error indicator
     pub fn snap(&self, vector: [f32; 2]) -> ([f32; 2], f32) {
+        // Validate input - handle NaN and Infinity gracefully
+        if !vector[0].is_finite() || !vector[1].is_finite() {
+            // Return error indicator: noise=1.0 signals invalid input
+            return ([1.0, 0.0], 1.0);
+        }
+
         let norm = (vector[0] * vector[0] + vector[1] * vector[1]).sqrt();
 
         if norm < 1e-10 {

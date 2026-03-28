@@ -1,0 +1,105 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "name": "constraint-theory-core",
+  "version": "0.1.0",
+  "description": "Deterministic unit vector snapping to Pythagorean triples",
+  "intent": "Snap 2D unit vectors to exact rational coordinates for cross-platform determinism",
+  
+  "capabilities": {
+    "dimensions": [2],
+    "state_count_approx": 1000,
+    "precision": "discrete",
+    "performance_ns": 100,
+    "determinism": "guaranteed",
+    "thread_safe": true
+  },
+  
+  "limitations": {
+    "dimensions_max": 2,
+    "continuous_resolution": false,
+    "arbitrary_precision": false,
+    "3d_support": false,
+    "consensus_safe": true
+  },
+  
+  "api": {
+    "snap": {
+      "input": {"vector": "[f32; 2]"},
+      "output": {"snapped": "[f32; 2]", "noise": "f32"},
+      "complexity": "O(log n)",
+      "edge_cases": {
+        "zero_vector": {"returns": "([1.0, 0.0], 0.0)"},
+        "nan_input": {"returns": "([1.0, 0.0], 1.0)", "note": "noise=1.0 signals error"},
+        "infinity": {"returns": "([1.0, 0.0], 1.0)", "note": "noise=1.0 signals error"}
+      }
+    },
+    "snap_batch_simd": {
+      "input": {"vectors": "&[[f32; 2]]"},
+      "output": {"results": "Vec<([f32; 2], f32)>"},
+      "complexity": "O(n log n)",
+      "warning": "AVX2 SIMD - may have platform-dependent behavior for consensus"
+    }
+  },
+  
+  "use_cases": {
+    "recommended": [
+      "2D game networking with lockstep",
+      "Monte Carlo reproducibility",
+      "Direction quantization for ML"
+    ],
+    "not_recommended": [
+      "3D robotics",
+      "General constraint satisfaction",
+      "Arbitrary precision arithmetic"
+    ]
+  },
+  
+  "decision_tree": {
+    "condition": "dimension == 2 AND need_determinism == true",
+    "if_true": "RECOMMEND",
+    "if_false": {
+      "condition": "dimension == 3",
+      "if_true": "NOT_SUPPORTED",
+      "if_false": "MAYBE_OVERKILL"
+    }
+  },
+  
+  "keywords": [
+    "deterministic",
+    "floating-point",
+    "pythagorean-triples",
+    "kd-tree",
+    "unit-vectors",
+    "cross-platform",
+    "reproducible",
+    "game-networking",
+    "consensus"
+  ],
+  
+  "ecosystem": {
+    "python_bindings": "constraint-theory",
+    "web_demos": "constraint-theory-web",
+    "research": "constraint-theory-research"
+  },
+  
+  "integration": {
+    "unity": {"status": "not_supported", "alternative": "Use Python bindings with Python.NET"},
+    "godot": {"status": "not_supported", "alternative": "Create GDExtension"},
+    "bevy": {"status": "supported", "method": "Direct Cargo.toml dependency"},
+    "unreal": {"status": "not_supported", "alternative": "C FFI bridge required"}
+  },
+  
+  "safety": {
+    "consensus_critical": true,
+    "scalar_path_recommended": true,
+    "simd_path_warning": "May have platform-dependent FP behavior"
+  },
+  
+  "metadata": {
+    "license": "MIT",
+    "language": "Rust",
+    "dependencies": 0,
+    "ci_tested": true,
+    "test_count": 82
+  }
+}

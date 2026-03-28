@@ -4,7 +4,7 @@
 
 ### `0.6² + 0.8² = 1.0000000000000002` — and you've been debugging this for years.
 
-**Snap noisy floats to exact rationals. Forever deterministic. Zero drift.**
+**Trade float drift for quantized exactness. Same bits, every machine, guaranteed.**
 
 [![GitHub stars](https://img.shields.io/github/stars/SuperInstance/constraint-theory-core?style=social)](https://github.com/SuperInstance/constraint-theory-core)
 [![CI](https://github.com/SuperInstance/constraint-theory-core/actions/workflows/ci.yml/badge.svg)](https://github.com/SuperInstance/constraint-theory-core/actions/workflows/ci.yml)
@@ -34,7 +34,7 @@
 └─────────────────────────────────────────────────────────────┘
 ```
 
-**Every `(0.6, 0.8)` is exactly `(3/5, 4/5)` — a Pythagorean triple. Your floating-point errors just became impossible.**
+**Every `(0.6, 0.8)` is exactly `(3/5, 4/5)` — a Pythagorean triple. You're trading continuous precision for discrete exactness.**
 
 ---
 
@@ -251,15 +251,25 @@ let (quantized, _) = manifold.snap(project_to_2d(&embedding));
 
 ---
 
-## ⚠️ Limitations (We Keep It Honest)
+## ⚠️ Limitations (Read Before Using)
 
-| Limitation | Why | Status |
+| Limitation | Why | Impact |
 |------------|-----|--------|
-| **2D only** | Pythagorean triples are inherently 2D | 3D is open research 🔬 |
-| **~1000 states** | Discrete lattice, not continuous | Increase density for more |
-| **Research-grade** | API may evolve | Core is stable |
+| **2D only** | Pythagorean triples are inherently 2D | Not for 3D games, robotics, drones |
+| **~1000 discrete states** | Lattice, not continuous | ~0.36° angular resolution — may feel coarse |
+| **Quantization tradeoff** | Snapping introduces noise | Check returned `noise` value for quality |
+| **Direction only** | Unit vectors only | Position, velocity, force drift not addressed |
+| **SIMD path variance** | AVX2 platform-dependent | Use scalar `snap()` for consensus-critical code |
 
-If you need arbitrary precision or general constraint satisfaction, this isn't it. But if you need *deterministic directions*, you just found your new favorite crate.
+**What this does NOT solve:**
+- 3D geometry (open research, contributions welcome)
+- General floating-point errors (only direction vectors)
+- GPU nondeterminism (use `torch.use_deterministic_algorithms()`)
+- Data loading order (set `num_workers=0` or seed workers)
+
+**If you need smooth analog rotation:** This may introduce noticeable snapping. Design around it.
+
+**If you need 3D:** This library doesn't support it yet.
 
 ---
 
@@ -310,10 +320,10 @@ cargo bench   # see the numbers yourself
 
 <div align="center">
 
-### ⚡ Your floating-point bugs are now someone else's problem.
+### ⚡ Deterministic directions for 2D systems.
 
 **→ [Get started in 30 seconds](#-install--verify-30-seconds)** · **[Try interactive demos](https://constraint-theory-web.pages.dev)** · **[Read the docs](https://docs.rs/constraint-theory-core)**
 
-*Built with 🦀 and unreasonable hatred for floating-point drift*
+*Built with 🦀 for systems that need exact reproducibility*
 
 </div>

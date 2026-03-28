@@ -217,7 +217,9 @@ impl KDTree {
                     let dy = point[1] - query[1];
                     let dist_sq = dx * dx + dy * dy;
 
-                    if dist_sq < *best_dist_sq {
+                    // Deterministic tie-breaking: prefer lower index when distances are equal
+                    // This ensures consensus-critical determinism across platforms
+                    if dist_sq < *best_dist_sq || (dist_sq == *best_dist_sq && indices[i] < *best_idx) {
                         *best_dist_sq = dist_sq;
                         *best_point = point;
                         *best_idx = indices[i];
