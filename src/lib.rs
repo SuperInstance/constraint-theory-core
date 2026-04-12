@@ -252,11 +252,19 @@ pub type CTResult<T> = Result<T, CTErr>;
 /// use constraint_theory_core::VERSION;
 /// println!("Constraint Theory Core v{}", VERSION);
 /// ```
+/// Crate version string
+/// Crate version string
 pub const VERSION: &str = env!("CARGO_PKG_VERSION");
 
 /// Crate version as semver components
+/// Major version component
+/// Major version component
 pub const VERSION_MAJOR: usize = 1;
+/// Minor version component
+/// Minor version component
 pub const VERSION_MINOR: usize = 0;
+/// Patch version component
+/// Patch version component
 pub const VERSION_PATCH: usize = 1;
 
 /// Hidden dimensions required for target precision

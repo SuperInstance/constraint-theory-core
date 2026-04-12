@@ -195,7 +195,7 @@ fn main() {
     println!("The simd feature flag controls SIMD behavior:\n");
     println!("  # Cargo.toml");
     println!("  [dependencies]");
-    println!("  constraint-theory-core = { version = \"1.0\", features = [\"simd\"] }");
+    println!("  constraint-theory-core = {{ version = \"1.0\", features = [\"simd\"] }");
     println!();
     println!("Runtime detection ensures safe fallback on unsupported CPUs.");
     println!();
