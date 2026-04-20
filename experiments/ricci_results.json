@@ -1,0 +1,11 @@
+[
+  {
+    "converged": true,
+    "steps": 12,
+    "actual_ms": 1200,
+    "predicted_ms": 1172.8050295074274,
+    "n_agents": 1024,
+    "latency_ms": 100,
+    "ratio": 1.0231879722616761
+  }
+]
