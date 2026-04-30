@@ -10,8 +10,8 @@ repository = "https://github.com/SuperInstance/constraint-theory-core"
 documentation = "https://docs.rs/constraint-theory-core"
 homepage = "https://github.com/SuperInstance/constraint-theory-core"
 readme = "README.md"
-keywords = ["geometry", "spatial-indexing", "kdtree", "pythagorean", "deterministic"]
-categories = ["algorithms", "mathematics", "science"]
+keywords = ["geometry", "spatial-indexing", "kdtree", "pythagorean", "deterministic", "floating-point", "exact-arithmetic", "constraint-satisfaction"]
+categories = ["algorithms", "mathematics", "science::robotics", "game-development"]
 exclude = [
     "target/*",
     "examples/*",
@@ -23,6 +23,11 @@ exclude = [
 
 [dev-dependencies]
 rand = "0.8"
+criterion = "0.5"
+
+[[bench]]
+name = "core_benchmarks"
+harness = false
 
 [features]
 default = []

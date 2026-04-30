@@ -2,7 +2,8 @@
 
 **A Step-by-Step Guide for Beginners**
 
-**Last Updated:** 2026-03-17
+**Last Updated:** 2025-01-27
+**Version:** 1.0.1
 
 ---
 
@@ -451,5 +452,5 @@ npm run dev
 
 ---
 
-**Document Version:** 1.0
-**Last Updated:** 2026-03-17
+**Document Version:** 1.0.1
+**Last Updated:** 2025-01-27

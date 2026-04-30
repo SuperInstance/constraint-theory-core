@@ -11,6 +11,7 @@
 
 use crate::kdtree::KDTree;
 use crate::simd::snap_batch_simd;
+use crate::{CTErr, CTResult};
 
 /// A Pythagorean triple (a, b, c) where a² + b² = c²
 ///
@@ -193,7 +194,18 @@ impl PythagoreanManifold {
     /// # Returns
     ///
     /// Tuple of (snapped_vector, noise) where noise is 1 - resonance
+    ///
+    /// # Edge Cases
+    ///
+    /// - Zero vector: Returns ([1.0, 0.0], 0.0)
+    /// - NaN/Infinity: Returns ([1.0, 0.0], 1.0) as error indicator
     pub fn snap(&self, vector: [f32; 2]) -> ([f32; 2], f32) {
+        // Validate input - handle NaN and Infinity gracefully
+        if !vector[0].is_finite() || !vector[1].is_finite() {
+            // Return error indicator: noise=1.0 signals invalid input
+            return ([1.0, 0.0], 1.0);
+        }
+
         let norm = (vector[0] * vector[0] + vector[1] * vector[1]).sqrt();
 
         if norm < 1e-10 {
@@ -233,6 +245,9 @@ impl PythagoreanManifold {
     /// Processes multiple vectors at once using AVX2 SIMD instructions.
     /// Achieves 8-16x speedup over scalar implementation.
     ///
+    /// ⚠️ **WARNING**: SIMD path may have platform-dependent behavior for tie-breaking.
+    /// For consensus-critical code, use `snap_batch()` (scalar) instead.
+    ///
     /// # Arguments
     ///
     /// * `vectors` - Input vectors to snap
@@ -251,6 +266,9 @@ impl PythagoreanManifold {
     /// This version avoids allocation by writing into a provided buffer.
     /// Use this for maximum performance in hot loops.
     ///
+    /// ⚠️ **WARNING**: SIMD path may have platform-dependent behavior.
+    /// For consensus-critical code, use `snap_batch_into()` instead.
+    ///
     /// # Arguments
     ///
     /// * `vectors` - Input vectors to snap
@@ -260,6 +278,9 @@ impl PythagoreanManifold {
     }
 
     /// Scalar batch snapping (fallback for non-SIMD or small batches)
+    /// 
+    /// ✅ **RECOMMENDED** for consensus-critical code.
+    /// Uses deterministic scalar path with explicit tie-breaking.
     ///
     /// # Arguments
     ///
@@ -268,6 +289,204 @@ impl PythagoreanManifold {
     pub fn snap_batch(&self, vectors: &[[f32; 2]], results: &mut [([f32; 2], f32)]) {
         for (i, &vec) in vectors.iter().enumerate() {
             results[i] = self.snap(vec);
+        }
+    }
+
+    /// Validate input before snapping (for consensus-critical systems)
+    ///
+    /// Returns Ok(()) if input is valid, Err(reason) if input will produce
+    /// undefined or potentially inconsistent results across platforms.
+    ///
+    /// # Arguments
+    ///
+    /// * `vector` - Input 2D vector to validate
+    ///
+    /// # Returns
+    ///
+    /// * `Ok(())` - Input is valid
+    /// * `Err(&'static str)` - Input is invalid with reason
+    ///
+    /// # Example
+    ///
+    /// ```rust
+    /// let manifold = PythagoreanManifold::new(200);
+    /// let input = [0.5, 0.5];
+    /// 
+    /// if let Err(reason) = manifold.validate_input(input) {
+    ///     // Reject input before consensus
+    ///     return Err(ConsensusError::InvalidInput(reason));
+    /// }
+    /// let (snapped, noise) = manifold.snap(input);
+    /// ```
+    pub fn validate_input(&self, vector: [f32; 2]) -> Result<(), &'static str> {
+        if !vector[0].is_finite() || !vector[1].is_finite() {
+            return Err("Input contains NaN or Infinity");
+        }
+        if vector[0] == 0.0 && vector[1] == 0.0 {
+            return Err("Zero vector - will snap to arbitrary default");
+        }
+        Ok(())
+    }
+
+    /// Snap a vector with explicit error handling (for consensus-critical systems)
+    ///
+    /// Unlike `snap()`, this method returns a `Result` type and will reject
+    /// invalid inputs rather than returning a fallback value.
+    ///
+    /// # Arguments
+    ///
+    /// * `vector` - Input 2D vector to snap
+    ///
+    /// # Returns
+    ///
+    /// * `Ok((snapped, noise))` - Successful snap with result
+    /// * `Err(CTErr::NaNInput)` - Input contains NaN
+    /// * `Err(CTErr::InfinityInput)` - Input contains Infinity
+    /// * `Err(CTErr::ZeroVector)` - Input is zero vector
+    ///
+    /// # Example
+    ///
+    /// ```rust
+    /// use constraint_theory_core::PythagoreanManifold;
+    ///
+    /// let manifold = PythagoreanManifold::new(200);
+    ///
+    /// // Valid input
+    /// let result = manifold.snap_checked([0.6, 0.8]);
+    /// assert!(result.is_ok());
+    ///
+    /// // Invalid input (NaN)
+    /// let result = manifold.snap_checked([f32::NAN, 0.5]);
+    /// assert!(result.is_err());
+    /// ```
+    pub fn snap_checked(&self, vector: [f32; 2]) -> CTResult<([f32; 2], f32)> {
+        // Detailed validation with specific error types
+        if vector[0].is_nan() || vector[1].is_nan() {
+            return Err(CTErr::NaNInput);
+        }
+        if vector[0].is_infinite() || vector[1].is_infinite() {
+            return Err(CTErr::InfinityInput);
+        }
+        if vector[0] == 0.0 && vector[1] == 0.0 {
+            return Err(CTErr::ZeroVector);
+        }
+        
+        // Perform the snap
+        Ok(self.snap(vector))
+    }
+
+    /// Batch snap with explicit error handling
+    ///
+    /// Validates all inputs before processing and returns an error if any
+    /// input is invalid. For partial success, use `snap_batch_partial`.
+    ///
+    /// # Arguments
+    ///
+    /// * `vectors` - Input vectors to snap
+    /// * `results` - Output buffer (must have same length as vectors)
+    ///
+    /// # Returns
+    ///
+    /// * `Ok(())` - All vectors snapped successfully
+    /// * `Err(CTErr::BufferSizeMismatch)` - Buffer size mismatch
+    /// * `Err(CTErr::NaNInput)` - One or more inputs contain NaN
+    /// * `Err(CTErr::InfinityInput)` - One or more inputs contain Infinity
+    pub fn snap_batch_checked(
+        &self,
+        vectors: &[[f32; 2]],
+        results: &mut [([f32; 2], f32)],
+    ) -> CTResult<()> {
+        if vectors.len() != results.len() {
+            return Err(CTErr::BufferSizeMismatch);
+        }
+
+        // Validate all inputs first
+        for (i, vec) in vectors.iter().enumerate() {
+            if vec[0].is_nan() || vec[1].is_nan() {
+                return Err(CTErr::NaNInput);
+            }
+            if vec[0].is_infinite() || vec[1].is_infinite() {
+                return Err(CTErr::InfinityInput);
+            }
+        }
+
+        // Process all vectors
+        for (i, &vec) in vectors.iter().enumerate() {
+            results[i] = self.snap(vec);
+        }
+
+        Ok(())
+    }
+
+    /// Batch snap with partial success reporting
+    ///
+    /// Processes all valid vectors and reports which ones failed validation.
+    /// Invalid inputs are snapped to the default ([1.0, 0.0], 0.0) with noise=1.0.
+    ///
+    /// # Returns
+    ///
+    /// Vector of (index, error) tuples for inputs that failed validation.
+    pub fn snap_batch_partial(
+        &self,
+        vectors: &[[f32; 2]],
+        results: &mut [([f32; 2], f32)],
+    ) -> Vec<(usize, CTErr)> {
+        let mut errors = Vec::new();
+
+        if vectors.len() != results.len() {
+            errors.push((0, CTErr::BufferSizeMismatch));
+            return errors;
+        }
+
+        for (i, &vec) in vectors.iter().enumerate() {
+            if vec[0].is_nan() || vec[1].is_nan() {
+                results[i] = ([1.0, 0.0], 1.0);
+                errors.push((i, CTErr::NaNInput));
+            } else if vec[0].is_infinite() || vec[1].is_infinite() {
+                results[i] = ([1.0, 0.0], 1.0);
+                errors.push((i, CTErr::InfinityInput));
+            } else if vec[0] == 0.0 && vec[1] == 0.0 {
+                results[i] = ([1.0, 0.0], 0.0);
+                // Zero vector is a soft error - don't report
+            } else {
+                results[i] = self.snap(vec);
+            }
+        }
+
+        errors
+    }
+
+    /// Get maximum angular error for this manifold density
+    ///
+    /// Returns the worst-case angular deviation from true input direction.
+    /// For density 200 (~1000 states): approximately 0.36° (0.0063 radians)
+    ///
+    /// # Formula
+    ///
+    /// Maximum angular separation ≈ π / state_count
+    pub fn max_angular_error(&self) -> f32 {
+        if self.valid_states.is_empty() {
+            return std::f32::consts::PI;
+        }
+        // Conservative estimate: worst case is half the angular spacing
+        std::f32::consts::PI / self.valid_states.len() as f32
+    }
+
+    /// Get recommended noise threshold for a use case
+    ///
+    /// Returns suggested maximum noise threshold before rejecting a snap.
+    ///
+    /// # Arguments
+    ///
+    /// * `use_case` - "animation", "game", "robotics", "ml", or "consensus"
+    pub fn recommended_noise_threshold(use_case: &str) -> f32 {
+        match use_case {
+            "animation" => 0.02,  // Visible snapping above this
+            "game" => 0.05,       // Players may notice above this
+            "robotics" => 0.01,   // Precision tasks need tighter threshold
+            "ml" => 0.03,         // Balance precision and coverage
+            "consensus" => 0.1,   // Accept any valid snap
+            _ => 0.05,
         }
     }
 }

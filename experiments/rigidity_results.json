@@ -1,0 +1,87 @@
+[
+  {
+    "k": 4,
+    "rigid_pct": 93.0,
+    "coord_pct": 0.0
+  },
+  {
+    "k": 5,
+    "rigid_pct": 98.0,
+    "coord_pct": 0.0
+  },
+  {
+    "k": 6,
+    "rigid_pct": 100.0,
+    "coord_pct": 0.0
+  },
+  {
+    "k": 7,
+    "rigid_pct": 100.0,
+    "coord_pct": 0.0
+  },
+  {
+    "k": 8,
+    "rigid_pct": 100.0,
+    "coord_pct": 0.0
+  },
+  {
+    "k": 9,
+    "rigid_pct": 100.0,
+    "coord_pct": 0.0
+  },
+  {
+    "k": 10,
+    "rigid_pct": 100.0,
+    "coord_pct": 0.0
+  },
+  {
+    "k": 11,
+    "rigid_pct": 100.0,
+    "coord_pct": 0.0
+  },
+  {
+    "k": 12,
+    "rigid_pct": 100.0,
+    "coord_pct": 0.0
+  },
+  {
+    "k": 13,
+    "rigid_pct": 100.0,
+    "coord_pct": 0.0
+  },
+  {
+    "k": 14,
+    "rigid_pct": 100.0,
+    "coord_pct": 2.0
+  },
+  {
+    "k": 15,
+    "rigid_pct": 100.0,
+    "coord_pct": 2.0
+  },
+  {
+    "k": 16,
+    "rigid_pct": 100.0,
+    "coord_pct": 2.0
+  },
+  {
+    "k": 17,
+    "rigid_pct": 100.0,
+    "coord_pct": 6.0
+  },
+  {
+    "k": 18,
+    "rigid_pct": 100.0,
+    "coord_pct": 6.0
+  },
+  {
+    "k": 19,
+    "rigid_pct": 100.0,
+    "coord_pct": 10.0
+  },
+  {
+    "k": 20,
+    "rigid_pct": 100.0,
+    "coord_pct": 16.0
+  }
+]
