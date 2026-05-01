@@ -1,6 +1,6 @@
 [package]
 name = "constraint-theory-core"
-version = "1.0.1"
+version = "2.1.0"
 edition = "2021"
 rust-version = "1.75"
 description = "Deterministic manifold snapping with O(log n) KD-tree indexing — maps continuous vectors to exact Pythagorean coordinates"
@@ -10,7 +10,7 @@ repository = "https://github.com/SuperInstance/constraint-theory-core"
 documentation = "https://docs.rs/constraint-theory-core"
 homepage = "https://github.com/SuperInstance/constraint-theory-core"
 readme = "README.md"
-keywords = ["geometry", "spatial-indexing", "kdtree", "pythagorean", "deterministic", "floating-point", "exact-arithmetic", "constraint-satisfaction"]
+keywords = ["geometry", "kdtree", "csp", "sudoku", "floating-point"]
 categories = ["algorithms", "mathematics", "science::robotics", "game-development"]
 exclude = [
     "target/*",

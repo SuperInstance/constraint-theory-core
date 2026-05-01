@@ -14,6 +14,12 @@
 //! | [`cache`] | Thread-safe lattice caching for performance |
 //! | [`kdtree`] | Spatial indexing for fast nearest neighbor queries |
 //! | [`simd`] | SIMD-optimized batch processing (AVX2) |
+//! | [`csp`] | Constraint satisfaction engine (Variable, Constraint, ConstraintProblem) |
+//! | [`ac3`] | AC-3 arc consistency algorithm |
+//! | [`backtracking`] | Backtracking solvers (MRV, LCV, FC, MAC) |
+//! | [`cdcl`] | Conflict-Driven Clause Learning (1-UIP) |
+//! | [`puzzle`] | Built-in puzzles (N-Queens, Sudoku 4x4, graph coloring) |
+//! | [`sudoku`] | 9x9 Sudoku solver with AC-3 + MRV + FC pipeline |
 //!
 //! # Core Concepts
 //!
@@ -141,6 +147,12 @@ pub mod percolation;
 pub mod quantizer;
 pub mod simd;
 pub mod tile;
+pub mod csp;
+pub mod ac3;
+pub mod backtracking;
+pub mod cdcl;
+pub mod puzzle;
+pub mod sudoku;
 
 #[cfg(test)]
 mod edge_case_tests;
