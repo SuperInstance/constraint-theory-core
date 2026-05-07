@@ -154,7 +154,7 @@ git clone https://github.com/SuperInstance/constraint-theory-core.git
 cd constraint-theory-core
 cargo build --release
 
-# Run all tests (112 tests)
+# Run all tests (184 tests)
 cargo test
 
 # Run specific test suites
@@ -192,7 +192,7 @@ fn main() {
 
 ```bash
 cargo test --lib
-# ✓ 112 tests pass — you're ready
+# ✓ 184 tests pass — you're ready
 ```
 
 ---
