@@ -139,7 +139,7 @@ def snap(x: float, y: float) -> Tuple[A2Point, float]:
     a = round(a_f)
     b = round(b_f)
 
-    # Check the 4 candidates (a,b), (a±1,b), (a,b±1) for closest
+    # Check 6 candidates for closest lattice point
     best = A2Point(a, b)
     best_err = _distance_to(x, y, best)
 

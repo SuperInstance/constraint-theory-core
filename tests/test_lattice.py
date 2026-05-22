@@ -101,10 +101,10 @@ class TestVector48:
 
 class TestHolonomy:
     def test_consistent_cycle(self):
-        # 4 directions that sum to 0 mod 48
-        assert is_consistent([0, 12, 24, 36]) or is_consistent([12, 12, 12, 12])
         # 12+12+12+12 = 48 ≡ 0 mod 48
         assert is_consistent([12, 12, 12, 12])
+        # 24+24 = 48 ≡ 0 mod 48
+        assert is_consistent([24, 24])
 
     def test_inconsistent_cycle(self):
         assert not is_consistent([1, 2, 3])  # 6 mod 48 ≠ 0

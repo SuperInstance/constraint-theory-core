@@ -5,6 +5,7 @@ The one package that brings together:
 - Eisenstein A₂ lattice quantization
 - Deadband temporal funnels
 - Laman rigidity for topology
+- Metronome consensus
 - Holonomy consistency verification
 
 All constants derived from first principles. Zero external dependencies.
@@ -37,7 +38,6 @@ from .lattice import (
 )
 
 from .temporal import (
-    COVERING_RADIUS as _TCR,
     FunnelPhase,
     FunnelResult,
     TemporalAgent,
@@ -48,6 +48,18 @@ from .rigidity import (
     henneberg_construct,
     is_laman,
     optimal_coupling,
+)
+
+from .metronome import (
+    Metronome,
+    MetronomeState,
+)
+
+from .holonomy import (
+    cycle_holonomy,
+    fault_boundaries,
+    isolate_fault,
+    verify_consistency,
 )
 
 __version__ = "0.1.0"
@@ -61,7 +73,11 @@ __all__ = [
     # Temporal
     "TemporalAgent", "FunnelPhase", "FunnelResult",
     # Rigidity
-    "is_laman", " henneberg_construct", "algebraic_connectivity", "optimal_coupling",
+    "is_laman", "henneberg_construct", "algebraic_connectivity", "optimal_coupling",
+    # Metronome
+    "Metronome", "MetronomeState",
+    # Holonomy
+    "cycle_holonomy", "verify_consistency", "isolate_fault", "fault_boundaries",
     # Meta
     "__version__",
 ]
