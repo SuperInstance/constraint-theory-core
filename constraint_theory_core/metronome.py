@@ -15,10 +15,10 @@ Laman-neighbor coupling with strength α* = 2/(λ₂ + λₙ).
 from __future__ import annotations
 
 import math
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import List, Optional, Tuple
 
-from .lattice import A2Point, snap
+from .lattice import A2Point
 from .rigidity import optimal_coupling
 from .temporal import TemporalAgent, FunnelPhase
 
@@ -57,12 +57,19 @@ class MetronomeState:
     epsilon: float
     anomaly_count: int
 
+    def __repr__(self) -> str:
+        return (
+            f"MetronomeState(phase={self.phase}, tick_count={self.tick_count}, "
+            f"converged={self.converged}, epsilon={self.epsilon}, "
+            f"anomaly_count={self.anomaly_count})"
+        )
+
 
 # ---------------------------------------------------------------------------
 # Metronome agent
 # ---------------------------------------------------------------------------
 
-class Metronome:
+class Metronome:  # pylint: disable=too-many-instance-attributes
     """Distributed metronome agent.
 
     Parameters
@@ -89,9 +96,9 @@ class Metronome:
     6.283185307179586
     """
 
-    def __init__(
+    def __init__(  # pylint: disable=too-many-arguments,too-many-positional-arguments
         self,
-        T: float = 1.0,
+        T: float = 1.0,  # pylint: disable=invalid-name
         phi0: float = 0.0,
         epsilon: float = 0.577,
         delta: float = 0.577,
@@ -99,7 +106,7 @@ class Metronome:
         edges: Optional[List[Tuple[int, int]]] = None,
         n_agents: int = 1,
     ) -> None:
-        self.T = T
+        self.T = T  # pylint: disable=invalid-name
         self.phi0 = phi0 % TWO_PI
         self.epsilon = epsilon
         self.delta = delta
@@ -186,7 +193,7 @@ class Metronome:
         bool
             True if phase difference ≤ deadband.
         """
-        diff = _circular_distance(self._phi, other._phi)
+        diff = _circular_distance(self._phi, other.phase)
         return diff <= self._temporal.epsilon
 
     def correct(self, neighbor_phases: List[float]) -> float:
@@ -220,9 +227,11 @@ class Metronome:
         self._corrections.append(abs(correction))
 
         # Convergence tracking: three consecutive tiny corrections
-        if len(self._corrections) >= 3:
-            recent = self._corrections[-3:]
-            if all(c < self.epsilon * 0.1 for c in recent):
+        convergence_window = 3
+        convergence_fraction = 0.1
+        if len(self._corrections) >= convergence_window:
+            recent = self._corrections[-convergence_window:]
+            if all(c < self.epsilon * convergence_fraction for c in recent):
                 self._converged = True
 
         return abs(correction)

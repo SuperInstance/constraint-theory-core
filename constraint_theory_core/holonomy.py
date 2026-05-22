@@ -8,9 +8,9 @@ cycle; global consistency requires every tile to be holonomy-free.
 
 from __future__ import annotations
 
-from typing import List, Tuple, Optional
+from typing import List, Tuple
 
-from .lattice import DIRECTION_COUNT, vector48_encode, vector48_decode
+from .lattice import DIRECTION_COUNT
 
 
 # ---------------------------------------------------------------------------

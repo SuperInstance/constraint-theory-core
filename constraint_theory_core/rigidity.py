@@ -25,7 +25,18 @@ from __future__ import annotations
 
 import math
 import random
+from itertools import combinations
 from typing import Dict, List, Set, Tuple
+
+# ---------------------------------------------------------------------------
+# Constants
+# ---------------------------------------------------------------------------
+
+POWER_ITERATIONS: int = 100
+CONVERGENCE_TOLERANCE: float = 1e-15
+SINGULARITY_TOLERANCE: float = 1e-10
+SUBSET_CHECK_LIMIT: int = 15
+EXACT_CONNECTIVITY_LIMIT: int = 50
 
 
 # ---------------------------------------------------------------------------
@@ -66,10 +77,9 @@ def is_laman(n_vertices: int, edges: List[Tuple[int, int]]) -> bool:
 
     # Condition 2: check no subset has too many edges
     # For small graphs, check all subsets. For larger, use pebble game.
-    if n_vertices <= 15:
+    if n_vertices <= SUBSET_CHECK_LIMIT:
         return _check_subsets(n_vertices, edges)
-    else:
-        return _pebble_game(n_vertices, edges)
+    return _pebble_game(n_vertices, edges)
 
 
 def henneberg_construct(n: int, seed: int = 42) -> List[Tuple[int, int]]:
@@ -160,37 +170,37 @@ def algebraic_connectivity(
     # For Henneberg graphs, empirical: λ₂ ≈ 0.5 - 1.0 for n=5..20
 
     # For now, compute exactly for small graphs via Jacobi iteration
-    if n > 50:
+    if n > EXACT_CONNECTIVITY_LIMIT:
         # Approximate for large graphs
         return 2.0 * len(edges) / (n * (n - 1))
 
     # Build Laplacian matrix
-    L = [[0.0] * n for _ in range(n)]
+    laplacian = [[0.0] * n for _ in range(n)]
     for u, v in edges:
-        L[u][u] += 1.0
-        L[v][v] += 1.0
-        L[u][v] -= 1.0
-        L[v][u] -= 1.0
+        laplacian[u][u] += 1.0
+        laplacian[v][v] += 1.0
+        laplacian[u][v] -= 1.0
+        laplacian[v][u] -= 1.0
 
     # Power iteration for second eigenvalue
     # Project out the first eigenvector (constant vector)
     x = [float(i + 1) for i in range(n)]  # initial guess
     _project_out_constant(x, n)
 
-    for _ in range(100):
+    for _ in range(POWER_ITERATIONS):
         # Multiply by L
-        y = [sum(L[i][j] * x[j] for j in range(n)) for i in range(n)]
+        y = [sum(laplacian[i][j] * x[j] for j in range(n)) for i in range(n)]
         _project_out_constant(y, n)
 
         # Rayleigh quotient
         norm_sq = sum(yi * yi for yi in y)
-        if norm_sq < 1e-15:
+        if norm_sq < CONVERGENCE_TOLERANCE:
             return 0.0
-        x = [yi / math.sqrt(norm_sq) for yi in y]  # type: ignore[name-defined]
+        x = [yi / math.sqrt(norm_sq) for yi in y]
 
     # Rayleigh quotient for final x
-    Lx = [sum(L[i][j] * x[j] for j in range(n)) for i in range(n)]
-    return sum(x[i] * Lx[i] for i in range(n))
+    laplacian_x = [sum(laplacian[i][j] * x[j] for j in range(n)) for i in range(n)]
+    return sum(x[i] * laplacian_x[i] for i in range(n))
 
 
 def optimal_coupling(
@@ -224,7 +234,7 @@ def optimal_coupling(
         degree[v] += 1
     lam_n = max(degree) + 1.0
 
-    if lam2 + lam_n < 1e-10:
+    if lam2 + lam_n < SINGULARITY_TOLERANCE:
         return 0.0
 
     return 2.0 / (lam2 + lam_n)
@@ -242,7 +252,6 @@ def _check_subsets(n: int, edges: List[Tuple[int, int]]) -> bool:
         edge_set.add((min(u, v), max(u, v)))
 
     # Check all subsets of size 2..n
-    from itertools import combinations
     for k in range(2, n + 1):
         for subset in combinations(range(n), k):
             vertex_set = set(subset)

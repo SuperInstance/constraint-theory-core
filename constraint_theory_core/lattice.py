@@ -55,6 +55,7 @@ DODECET_DIRECTIONS: List[Tuple[int, int]] = [
 # 48 Pythagorean directions (exact angles with rational sin/cos)
 # log2(48) = 5.585 bits — maximum information per bit for 16-bit integers
 DIRECTION_COUNT: int = 48
+DODECET_COUNT: int = 12
 
 
 # ---------------------------------------------------------------------------
@@ -83,6 +84,9 @@ class A2Point:
 
     def __neg__(self) -> A2Point:
         return A2Point(-self.a, -self.b)
+
+    def __repr__(self) -> str:
+        return f"A2Point(a={self.a}, b={self.b})"
 
     def norm_sq(self) -> int:
         """Squared Eisenstein norm: a² - ab + b².
@@ -190,8 +194,8 @@ def decode_dodecet(index: int) -> A2Point:
     ValueError
         If index is not in [0, 11].
     """
-    if not 0 <= index < 12:
-        raise ValueError(f"Dodecet index must be 0-11, got {index}")
+    if not 0 <= index < DODECET_COUNT:
+        raise ValueError(f"Dodecet index must be 0-{DODECET_COUNT - 1}, got {index}")
     a, b = DODECET_DIRECTIONS[index]
     return A2Point(a, b)
 
@@ -217,8 +221,8 @@ def encode_dodecet(point: A2Point) -> int:
     t = (point.a, point.b)
     try:
         return DODECET_DIRECTIONS.index(t)
-    except ValueError:
-        raise ValueError(f"({point.a}, {point.b}) is not a dodecet direction")
+    except ValueError as exc:
+        raise ValueError(f"({point.a}, {point.b}) is not a dodecet direction") from exc
 
 
 def vector48_encode(angle: float) -> int:
@@ -236,10 +240,10 @@ def vector48_encode(angle: float) -> int:
     int
         Direction index 0-47.
     """
-    TWO_PI = 2.0 * math.pi
+    two_pi = 2.0 * math.pi
     # Normalize to [0, 2π)
-    normalized = angle % TWO_PI
-    index = round(normalized / TWO_PI * DIRECTION_COUNT) % DIRECTION_COUNT
+    normalized = angle % two_pi
+    index = round(normalized / two_pi * DIRECTION_COUNT) % DIRECTION_COUNT
     return index
 
 

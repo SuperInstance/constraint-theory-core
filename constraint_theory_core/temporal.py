@@ -22,9 +22,11 @@ True
 from __future__ import annotations
 
 import math
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from enum import Enum
-from typing import Optional, Tuple
+from typing import Optional
+
+from .lattice import snap
 
 # ---------------------------------------------------------------------------
 # Constants
@@ -70,6 +72,13 @@ class FunnelResult:
     deadband: float
     snapped_a: int
     snapped_b: int
+
+    def __repr__(self) -> str:
+        return (
+            f"FunnelResult(phase={self.phase!r}, error={self.error}, "
+            f"deadband={self.deadband}, snapped_a={self.snapped_a}, "
+            f"snapped_b={self.snapped_b})"
+        )
 
 
 # ---------------------------------------------------------------------------
@@ -135,9 +144,6 @@ class TemporalAgent:
         FunnelResult
             Phase, error, deadband, and snap point.
         """
-        # Lazy import to avoid circular deps at module level
-        from .lattice import snap
-
         pt, error = snap(x, y)
 
         # Decay the deadband
@@ -178,14 +184,14 @@ class TemporalAgent:
         if dt > 0:
             self._epsilon *= math.exp(-self.decay_rate * dt)
 
-    def reset(self, x: float, y: float) -> None:
+    def reset(self, _x: float, _y: float) -> None:
         """Reset the funnel to initial width.
 
         Parameters
         ----------
-        x : float
+        _x : float
             Unused (for API compatibility).
-        y : float
+        _y : float
             Unused (for API compatibility).
         """
         self._epsilon = self.epsilon_0
