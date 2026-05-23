@@ -33,6 +33,7 @@ from .lattice import (
     is_safe,
     norm_sq,
     snap,
+    soft_snap,
     vector48_decode,
     vector48_encode,
 )
@@ -48,6 +49,7 @@ from .rigidity import (
     henneberg_construct,
     is_laman,
     optimal_coupling,
+    soft_rigidity,
 )
 
 from .metronome import (
@@ -59,7 +61,16 @@ from .holonomy import (
     cycle_holonomy,
     fault_boundaries,
     isolate_fault,
+    soft_verify_consistency,
     verify_consistency,
+)
+
+from .genre_brain import (
+    GenreEpsilons,
+    custom_genre,
+    get_genre,
+    list_genres,
+    sweep_genre,
 )
 
 from .exercises import (
@@ -70,18 +81,20 @@ __version__ = "0.1.0"
 
 __all__ = [
     # Lattice
-    "A2Point", "snap", "covering_radius", "is_safe", "norm_sq",
+    "A2Point", "snap", "soft_snap", "covering_radius", "is_safe", "norm_sq",
     "decode_dodecet", "encode_dodecet", "vector48_encode", "vector48_decode",
     "holonomy_product", "is_consistent",
     "COVERING_RADIUS", "SAFE_THRESHOLD", "SQRT_3", "DIRECTION_COUNT",
     # Temporal
     "TemporalAgent", "FunnelPhase", "FunnelResult",
     # Rigidity
-    "is_laman", "henneberg_construct", "algebraic_connectivity", "optimal_coupling",
+    "is_laman", "henneberg_construct", "algebraic_connectivity", "optimal_coupling", "soft_rigidity",
     # Metronome
     "Metronome", "MetronomeState",
     # Holonomy
-    "cycle_holonomy", "verify_consistency", "isolate_fault", "fault_boundaries",
+    "cycle_holonomy", "verify_consistency", "soft_verify_consistency", "isolate_fault", "fault_boundaries",
+    # Genre Brain
+    "GenreEpsilons", "get_genre", "list_genres", "custom_genre", "sweep_genre",
     # Exercises
     "generate_exercise",
     # Meta

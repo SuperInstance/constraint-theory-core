@@ -105,6 +105,7 @@ class Metronome:  # pylint: disable=too-many-instance-attributes
         neighbors: Optional[List[int]] = None,
         edges: Optional[List[Tuple[int, int]]] = None,
         n_agents: int = 1,
+        softness: float = 0.0,
     ) -> None:
         # Validate T
         if not isinstance(T, (int, float)):
@@ -122,6 +123,7 @@ class Metronome:  # pylint: disable=too-many-instance-attributes
         self.edges = edges if edges is not None else []
         self.n_agents = n_agents
 
+        self.softness = softness
         self._phi: float = self.phi0
         self._t: float = 0.0
         self._tick_count: int = 0
@@ -131,6 +133,7 @@ class Metronome:  # pylint: disable=too-many-instance-attributes
             decay_rate=1.0 / self.T if self.T > 0 else 1.0,
             epsilon_0=self.epsilon,
             delta=self.delta,
+            softness=self.softness,
         )
         self._alpha = (
             optimal_coupling(self.edges, self.n_agents)
@@ -189,7 +192,7 @@ class Metronome:  # pylint: disable=too-many-instance-attributes
         """Check if two metronomes are in sync.
 
         Two agents agree when their phase difference is within the
-        current deadband ε.
+        current deadband ε, widened by the softness parameter.
 
         Parameters
         ----------
@@ -199,10 +202,11 @@ class Metronome:  # pylint: disable=too-many-instance-attributes
         Returns
         -------
         bool
-            True if phase difference ≤ deadband.
+            True if phase difference ≤ effective deadband.
         """
         diff = _circular_distance(self._phi, other.phase)
-        return diff <= self._temporal.epsilon
+        effective_epsilon = self._temporal.epsilon * (1.0 + self.softness)
+        return diff <= effective_epsilon
 
     def correct(self, neighbor_phases: List[float]) -> float:
         """Apply Laman-neighbor correction.
@@ -229,8 +233,11 @@ class Metronome:  # pylint: disable=too-many-instance-attributes
         # Shortest signed difference
         diff = _circular_diff(avg_phase, self._phi)
 
-        # Apply correction with optimal coupling
-        correction = self._alpha * diff
+        # Apply correction with optimal coupling, scaled by (1 - softness)
+        # softness=0: full correction (rigid consensus)
+        # softness=1: no correction (no consensus)
+        effective_alpha = self._alpha * (1.0 - self.softness)
+        correction = effective_alpha * diff
         self._phi = (self._phi + correction) % TWO_PI
         self._corrections.append(abs(correction))
 

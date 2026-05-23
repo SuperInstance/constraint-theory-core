@@ -26,7 +26,7 @@ from dataclasses import dataclass
 from enum import Enum
 from typing import Optional
 
-from .lattice import snap
+from .lattice import snap, soft_snap
 
 # ---------------------------------------------------------------------------
 # Constants
@@ -101,6 +101,10 @@ class TemporalAgent:
         Initial deadband width. Defaults to covering radius.
     delta : float
         Anomaly threshold (absolute). Defaults to covering radius.
+    softness : float
+        Soft-snap parameter ε in [0, 1].  0 = exact snap (rigid),
+        1 = no snap (free).  Intermediate values soften the deadband
+        enforcement by interpolating the snap target.
     """
 
     def __init__(
@@ -108,6 +112,7 @@ class TemporalAgent:
         decay_rate: float = 0.1,
         epsilon_0: float = COVERING_RADIUS,
         delta: float = COVERING_RADIUS,
+        softness: float = 0.0,
     ) -> None:
         # Validate decay_rate
         if not isinstance(decay_rate, (int, float)):
@@ -132,6 +137,7 @@ class TemporalAgent:
         self.decay_rate = decay_rate
         self.epsilon_0 = epsilon_0
         self.delta = delta
+        self.softness = softness
         self._epsilon = epsilon_0
         self._last_t: Optional[float] = None
         self._last_error: float = 0.0
@@ -166,6 +172,9 @@ class TemporalAgent:
         """
         pt, error = snap(x, y)
 
+        # Apply soft deadband: widen effective deadband by softness
+        effective_epsilon = self._epsilon * (1.0 + self.softness)
+
         # Decay the deadband
         if self._last_t is not None:
             dt = t - self._last_t
@@ -173,12 +182,11 @@ class TemporalAgent:
                 self._epsilon *= math.exp(-self.decay_rate * dt)
         self._last_t = t
 
-        # Determine phase
         if error > self.delta:
             phase = FunnelPhase.ANOMALY
             self._anomalies += 1
             self._epsilon = self.epsilon_0  # reset
-        elif error > self._epsilon:
+        elif error > effective_epsilon:
             phase = FunnelPhase.APPROACH
         else:
             phase = FunnelPhase.NARROWING

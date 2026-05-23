@@ -91,6 +91,59 @@ def verify_consistency(
     return True
 
 
+def soft_verify_consistency(
+    tiles: List[Tuple[List[Tuple[int, int]], List[int]]],
+    epsilon: float = 0.0,
+) -> float:
+    """Soft holonomy verification with continuous tolerance.
+
+    At ε=0 this is equivalent to ``verify_consistency`` (hard check).
+    As ε increases, holonomy deviations are tolerated proportionally,
+    returning a score in [0, 1] instead of a boolean.
+
+    Score::
+
+        1.0 - ε * (total_holonomy_deviation / max_deviation)
+
+    where max_deviation = 48 (full rotation per tile).
+
+    Parameters
+    ----------
+    tiles : List[Tuple[List[Tuple[int, int]], List[int]]]
+        Each tile is a pair (edges, directions).
+    epsilon : float
+        Softness in [0, 1].
+
+    Returns
+    -------
+    float
+        Consistency score in [0, 1].  1.0 = fully consistent.
+    """
+    if not 0.0 <= epsilon <= 1.0:
+        raise ValueError(f"epsilon must be in [0, 1], got {epsilon}")
+
+    if not tiles:
+        return 1.0
+
+    if epsilon == 0.0:
+        return 1.0 if verify_consistency(tiles) else 0.0
+
+    total_deviation = 0
+    for edges, directions in tiles:
+        h = cycle_holonomy(edges, directions)
+        # Deviation from zero: use min(h, 48-h) since holonomy wraps
+        deviation = min(h, DIRECTION_COUNT - h)
+        total_deviation += deviation
+
+    max_deviation = len(tiles) * (DIRECTION_COUNT // 2)
+    if max_deviation == 0:
+        return 1.0
+
+    raw_score = 1.0 - total_deviation / max_deviation
+    # Soften: blend between hard score and 1.0
+    return epsilon * 1.0 + (1.0 - epsilon) * raw_score
+
+
 def isolate_fault(
     tiles: List[Tuple[List[Tuple[int, int]], List[int]]]
 ) -> int:

@@ -222,6 +222,62 @@ def algebraic_connectivity(
     return sum(x[i] * laplacian_x[i] for i in range(n))
 
 
+def soft_rigidity(
+    n_vertices: int,
+    edges: List[Tuple[int, int]],
+    epsilon: float = 0.0,
+) -> float:
+    """Compute a continuous rigidity score softened by ε.
+
+    At ε=0 the function returns 1.0 if the graph is Laman-rigid and 0.0
+    otherwise (exact, hard decision).  As ε → 1 the score relaxes toward
+    a continuous "how close to rigid" measure that never fully rejects a
+    graph.
+
+    Score formula::
+
+        if is_laman(n, edges):
+            score = 1.0 - ε * (1 - connectivity_factor)
+        else:
+            edge_ratio = |E| / (2n-3)   if n >= 2 else 0
+            score = ε * edge_ratio
+
+    Parameters
+    ----------
+    n_vertices : int
+        Number of vertices.
+    edges : List[Tuple[int, int]]
+        Edge list.
+    epsilon : float
+        Softness in [0, 1].  0 = hard Laman check, 1 = fully soft.
+
+    Returns
+    -------
+    float
+        Rigidity score in [0, 1].
+    """
+    if not 0.0 <= epsilon <= 1.0:
+        raise ValueError(f"epsilon must be in [0, 1], got {epsilon}")
+
+    rigid = is_laman(n_vertices, edges)
+
+    if epsilon == 0.0:
+        return 1.0 if rigid else 0.0
+
+    if n_vertices < 2:
+        return 1.0 if len(edges) == 0 else 0.0
+
+    expected = 2 * n_vertices - 3
+    edge_ratio = min(len(edges) / expected, 1.0) if expected > 0 else 0.0
+    conn = algebraic_connectivity(edges, n_vertices)
+    conn_factor = min(conn / 1.0, 1.0) if conn > 0 else 0.0
+
+    if rigid:
+        return 1.0 - epsilon * (1.0 - 0.5 * conn_factor)
+    else:
+        return epsilon * edge_ratio
+
+
 def optimal_coupling(
     edges: List[Tuple[int, int]], n: int
 ) -> float:

@@ -171,6 +171,86 @@ def snap(x: float, y: float) -> Tuple[A2Point, float]:
     return (best, best_err)
 
 
+def soft_snap(x: float, y: float, epsilon: float = 0.0) -> Tuple[Tuple[float, float], float, A2Point]:
+    """Snap with continuous softness control via ε-interpolation.
+
+    Interpolates between the original point (ε=1, free) and the
+    exact lattice snap (ε=0, rigid):
+
+        soft_snap(x, ε) = (1-ε) * snap(x) + ε * x
+
+    Parameters
+    ----------
+    x : float
+        Real coordinate.
+    y : float
+        Imaginary coordinate.
+    epsilon : float
+        Softness parameter in [0, 1].
+        - 0.0 : exact snap (current ``snap()`` behaviour)
+        - 0.15: mostly snapped, slight drift
+        - 0.5 : loosely attracted to lattice
+        - 1.0 : free (no snap, returns original point)
+
+    Returns
+    -------
+    Tuple[Tuple[float, float], float, A2Point]
+        ((soft_x, soft_y), error, snapped_point) where
+        (soft_x, soft_y) is the softened point, *error* is the
+        Euclidean distance to the exact lattice point, and
+        *snapped_point* is the exact lattice point.
+
+    Raises
+    ------
+    ValueError
+        If *epsilon* is not in [0, 1].
+
+    Examples
+    --------
+    >>> (xy, err, pt) = soft_snap(0.5, 0.3, epsilon=0.0)
+    >>> pt2, err2 = snap(0.5, 0.3)
+    >>> abs(err - err2) < 1e-12
+    True
+    >>> (xy, _, _) = soft_snap(0.5, 0.3, epsilon=1.0)
+    >>> abs(xy[0] - 0.5) < 1e-12 and abs(xy[1] - 0.3) < 1e-12
+    True
+    """
+    if not isinstance(epsilon, (int, float)):
+        raise TypeError(
+            f"epsilon must be a number, got {type(epsilon).__name__}"
+        )
+    if math.isnan(epsilon) or math.isinf(epsilon):
+        raise ValueError(f"epsilon must be finite, got {epsilon}")
+    if not 0.0 <= epsilon <= 1.0:
+        raise ValueError(
+            f"epsilon must be in [0, 1], got {epsilon}"
+        )
+
+    # Exact snap
+    snapped, err = snap(x, y)
+
+    # At ε=1, return the original point unchanged
+    if abs(epsilon - 1.0) < 1e-15:
+        return ((x, y), err, snapped)
+
+    # At ε=0, return exact snap
+    if epsilon == 0.0:
+        sx, sy = snapped.to_complex()
+        return ((sx, sy), err, snapped)
+
+    # Interpolate: (1-ε)*snapped + ε*original
+    sx, sy = snapped.to_complex()
+    soft_x = (1.0 - epsilon) * sx + epsilon * x
+    soft_y = (1.0 - epsilon) * sy + epsilon * y
+
+    # Recompute distance from soft point to lattice point
+    dx = soft_x - sx
+    dy = soft_y - sy
+    soft_err = math.sqrt(dx * dx + dy * dy)
+
+    return ((soft_x, soft_y), soft_err, snapped)
+
+
 def covering_radius() -> float:
     """Return the A₂ covering radius ρ = 1/√3."""
     return COVERING_RADIUS
