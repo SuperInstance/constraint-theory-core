@@ -9,3 +9,4 @@ pub mod ornaments;
 pub mod rhythms;
 pub mod cohomology;
 pub mod penrose;
+pub mod living;
