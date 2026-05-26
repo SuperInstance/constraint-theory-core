@@ -5,9 +5,9 @@
 //!
 //! Run with: cargo run --release --example robotics
 
-use constraint_theory_core::manifold::PythagoreanManifold;
 use constraint_theory_core::curvature::RicciFlow;
 use constraint_theory_core::gauge::GaugeConnection;
+use constraint_theory_core::manifold::PythagoreanManifold;
 use constraint_theory_core::tile::Tile;
 
 fn main() {
@@ -46,12 +46,7 @@ fn main() {
     println!("-------------------------\n");
 
     // Plan path through waypoints
-    let waypoints = [
-        [0.0, 0.0],
-        [0.3, 0.4],
-        [0.6, 0.8],
-        [1.0, 0.0],
-    ];
+    let waypoints = [[0.0, 0.0], [0.3, 0.4], [0.6, 0.8], [1.0, 0.0]];
 
     println!("Path through waypoints:");
     println!("  Waypoint      Original      -> Snapped");
@@ -63,7 +58,11 @@ fn main() {
         snapped_path.push(snapped);
         println!(
             "  {:2}.        ({:.2}, {:.2}) -> ({:.3}, {:.3})",
-            i + 1, waypoint[0], waypoint[1], snapped[0], snapped[1]
+            i + 1,
+            waypoint[0],
+            waypoint[1],
+            snapped[0],
+            snapped[1]
         );
     }
 
@@ -89,17 +88,29 @@ fn main() {
     println!("  Step | Curvature values");
     println!("  ------|----------------------------------");
 
-    println!("  {:4} | [{:.2}, {:.2}, {:.2}, {:.2}, {:.2}, {:.2}]",
-             0, terrain_curvature[0], terrain_curvature[1],
-             terrain_curvature[2], terrain_curvature[3],
-             terrain_curvature[4], terrain_curvature[5]);
+    println!(
+        "  {:4} | [{:.2}, {:.2}, {:.2}, {:.2}, {:.2}, {:.2}]",
+        0,
+        terrain_curvature[0],
+        terrain_curvature[1],
+        terrain_curvature[2],
+        terrain_curvature[3],
+        terrain_curvature[4],
+        terrain_curvature[5]
+    );
 
     for step in 1..=5 {
         rf.evolve(&mut terrain_curvature, 1);
-        println!("  {:4} | [{:.2}, {:.2}, {:.2}, {:.2}, {:.2}, {:.2}]",
-                 step, terrain_curvature[0], terrain_curvature[1],
-                 terrain_curvature[2], terrain_curvature[3],
-                 terrain_curvature[4], terrain_curvature[5]);
+        println!(
+            "  {:4} | [{:.2}, {:.2}, {:.2}, {:.2}, {:.2}, {:.2}]",
+            step,
+            terrain_curvature[0],
+            terrain_curvature[1],
+            terrain_curvature[2],
+            terrain_curvature[3],
+            terrain_curvature[4],
+            terrain_curvature[5]
+        );
     }
 
     // Example 4: Obstacle Avoidance
@@ -108,15 +119,11 @@ fn main() {
 
     // Check if planned paths avoid obstacles
     let obstacles = vec![
-        ([0.4, 0.4], 0.2),  // (x, y), radius
+        ([0.4, 0.4], 0.2), // (x, y), radius
         ([0.7, 0.3], 0.15),
     ];
 
-    let test_path: Vec<[f32; 2]> = vec![
-        [0.0, 0.0],
-        [0.5, 0.5],
-        [1.0, 1.0],
-    ];
+    let test_path: Vec<[f32; 2]> = vec![[0.0, 0.0], [0.5, 0.5], [1.0, 1.0]];
 
     println!("Checking path for obstacles:");
     for (i, point) in test_path.iter().enumerate() {
@@ -127,12 +134,23 @@ fn main() {
             let dist = (dx * dx + dy * dy).sqrt();
             if dist < *radius {
                 safe = false;
-                println!("  Point {} ({:.2}, {:.2}) - COLLISION with obstacle at ({:.2}, {:.2})",
-                         i + 1, point[0], point[1], obs[0], obs[1]);
+                println!(
+                    "  Point {} ({:.2}, {:.2}) - COLLISION with obstacle at ({:.2}, {:.2})",
+                    i + 1,
+                    point[0],
+                    point[1],
+                    obs[0],
+                    obs[1]
+                );
             }
         }
         if safe {
-            println!("  Point {} ({:.2}, {:.2}) - Safe", i + 1, point[0], point[1]);
+            println!(
+                "  Point {} ({:.2}, {:.2}) - Safe",
+                i + 1,
+                point[0],
+                point[1]
+            );
         }
     }
 
@@ -171,18 +189,17 @@ fn main() {
     fused_y /= total_confidence;
 
     let (final_fused, _) = manifold.snap([fused_x, fused_y]);
-    println!("\n  Final fused position: ({:.3}, {:.3})", final_fused[0], final_fused[1]);
+    println!(
+        "\n  Final fused position: ({:.3}, {:.3})",
+        final_fused[0], final_fused[1]
+    );
 
     // Example 6: Parallel Transport
     println!("\n\nExample 6: Parallel Transport on Manifolds");
     println!("---------------------------------------------\n");
 
     // Transport vectors across curved surface
-    let tiles = vec![
-        Tile::new(0),
-        Tile::new(1),
-        Tile::new(2),
-    ];
+    let tiles = vec![Tile::new(0), Tile::new(1), Tile::new(2)];
     let conn = GaugeConnection::new(tiles);
 
     let initial_vector = [1.0, 0.0, 0.0];
@@ -191,10 +208,14 @@ fn main() {
     let transported = conn.parallel_transport(initial_vector, &path);
 
     println!("Parallel transport along path {:?}:", path);
-    println!("  Initial vector: ({:.1}, {:.1}, {:.1})",
-             initial_vector[0], initial_vector[1], initial_vector[2]);
-    println!("  Transported:    ({:.3}, {:.3}, {:.3})",
-             transported[0], transported[1], transported[2]);
+    println!(
+        "  Initial vector: ({:.1}, {:.1}, {:.1})",
+        initial_vector[0], initial_vector[1], initial_vector[2]
+    );
+    println!(
+        "  Transported:    ({:.3}, {:.3}, {:.3})",
+        transported[0], transported[1], transported[2]
+    );
 
     let rotation_angle = (transported[0].acos() * 180.0 / std::f32::consts::PI).abs();
     println!("  Rotation angle: {:.2}°", rotation_angle);

@@ -48,7 +48,11 @@ fn main() {
     println!("Hidden dimensions k = {}", k);
 
     let lifted = lift_to_hidden(&point, k);
-    println!("Lifted to {} dimensions: {:?}", lifted.len(), &lifted[..5.min(lifted.len())]);
+    println!(
+        "Lifted to {} dimensions: {:?}",
+        lifted.len(),
+        &lifted[..5.min(lifted.len())]
+    );
     println!("... (showing first 5 components)\n");
 
     // Example 3: Projecting back to visible dimensions
@@ -84,7 +88,13 @@ fn main() {
 
     for (k, n) in configs {
         let accuracy = holographic_accuracy(k, n);
-        println!("k={}, n={}: accuracy = {:.4} ({:.1}%)", k, n, accuracy, accuracy * 100.0);
+        println!(
+            "k={}, n={}: accuracy = {:.4} ({:.1}%)",
+            k,
+            n,
+            accuracy,
+            accuracy * 100.0
+        );
     }
     println!();
 
@@ -102,8 +112,13 @@ fn main() {
     for (name, epsilon) in applications {
         let k = hidden_dim_count(epsilon);
         let accuracy = holographic_accuracy(k, k + 2);
-        println!("{:20}: ε = {:.0e}, k = {:2}, accuracy = {:.2}%", 
-                 name, epsilon, k, accuracy * 100.0);
+        println!(
+            "{:20}: ε = {:.0e}, k = {:2}, accuracy = {:.2}%",
+            name,
+            epsilon,
+            k,
+            accuracy * 100.0
+        );
     }
     println!();
 
@@ -125,8 +140,10 @@ fn main() {
         // Snap via manifold
         let (snapped, noise) = manifold.snap([encoded[0] as f32, encoded[1] as f32]);
 
-        println!("Original: {:?} -> Snapped: {:?} (noise: {:.4})", 
-                 point, snapped, noise);
+        println!(
+            "Original: {:?} -> Snapped: {:?} (noise: {:.4})",
+            point, snapped, noise
+        );
     }
     println!();
 
@@ -138,7 +155,10 @@ fn main() {
     for bits in [8, 16, 32, 64] {
         let epsilon = 2.0_f64.powi(-(bits as i32));
         let k = hidden_dim_count(epsilon);
-        println!("{:2} bits: ε = {:.2e}, k = {:2} hidden dims", bits, epsilon, k);
+        println!(
+            "{:2} bits: ε = {:.2e}, k = {:2} hidden dims",
+            bits, epsilon, k
+        );
     }
 
     println!("\n=== Hidden Dimensions Example Complete ===");

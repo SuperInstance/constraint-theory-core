@@ -278,7 +278,7 @@ impl PythagoreanManifold {
     }
 
     /// Scalar batch snapping (fallback for non-SIMD or small batches)
-    /// 
+    ///
     /// ✅ **RECOMMENDED** for consensus-critical code.
     /// Uses deterministic scalar path with explicit tie-breaking.
     ///
@@ -312,7 +312,7 @@ impl PythagoreanManifold {
     /// use constraint_theory_core::PythagoreanManifold;
     /// let manifold = PythagoreanManifold::new(200);
     /// let input = [0.5, 0.5];
-    /// 
+    ///
     /// if let Err(reason) = manifold.validate_input(input) {
     ///     // Reject input before consensus
     ///     return Err(ConsensusError::InvalidInput(reason));
@@ -371,7 +371,7 @@ impl PythagoreanManifold {
         if vector[0] == 0.0 && vector[1] == 0.0 {
             return Err(CTErr::ZeroVector);
         }
-        
+
         // Perform the snap
         Ok(self.snap(vector))
     }
@@ -482,11 +482,11 @@ impl PythagoreanManifold {
     /// * `use_case` - "animation", "game", "robotics", "ml", or "consensus"
     pub fn recommended_noise_threshold(use_case: &str) -> f32 {
         match use_case {
-            "animation" => 0.02,  // Visible snapping above this
-            "game" => 0.05,       // Players may notice above this
-            "robotics" => 0.01,   // Precision tasks need tighter threshold
-            "ml" => 0.03,         // Balance precision and coverage
-            "consensus" => 0.1,   // Accept any valid snap
+            "animation" => 0.02, // Visible snapping above this
+            "game" => 0.05,      // Players may notice above this
+            "robotics" => 0.01,  // Precision tasks need tighter threshold
+            "ml" => 0.03,        // Balance precision and coverage
+            "consensus" => 0.1,  // Accept any valid snap
             _ => 0.05,
         }
     }

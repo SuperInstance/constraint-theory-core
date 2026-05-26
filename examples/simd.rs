@@ -17,27 +17,27 @@ fn main() {
 
     // Example 1: SIMD capability detection
     println!("--- Example 1: SIMD Capability Detection ---");
-    
+
     #[cfg(target_arch = "x86_64")]
     {
         let has_avx2 = is_avx2_available();
         println!("Platform: x86_64");
         println!("AVX2 available: {}", has_avx2);
-        
+
         if has_avx2 {
             println!("SIMD will use AVX2 (8x f32 parallelism)");
         } else {
             println!("SIMD will fall back to scalar implementation");
         }
     }
-    
+
     #[cfg(target_arch = "aarch64")]
     {
         println!("Platform: ARM64");
         println!("NEON available: true (always on for ARM64)");
         println!("SIMD will use NEON (4x f32 parallelism)");
     }
-    
+
     #[cfg(not(any(target_arch = "x86_64", target_arch = "aarch64")))]
     {
         println!("Platform: Unknown/Other");
@@ -70,8 +70,10 @@ fn main() {
     println!("--- Example 3: Batch Size Performance ---");
     let batch_sizes = [8, 16, 64, 256, 1024, 4096, 16384];
 
-    println!("{:>10} {:>12} {:>12} {:>8}", 
-             "Batch Size", "Scalar (us)", "SIMD (us)", "Speedup");
+    println!(
+        "{:>10} {:>12} {:>12} {:>8}",
+        "Batch Size", "Scalar (us)", "SIMD (us)", "Speedup"
+    );
     println!("{:-<10} {:->12} {:->12} {:->8}", "", "", "", "");
 
     for &size in &batch_sizes {
@@ -102,8 +104,10 @@ fn main() {
         let scalar_us = scalar_time.as_nanos() as f64 / 1000.0;
         let simd_us = simd_time.as_nanos() as f64 / 1000.0;
 
-        println!("{:>10} {:>12.2} {:>12.2} {:>8.2}x", 
-                 size, scalar_us, simd_us, speedup);
+        println!(
+            "{:>10} {:>12.2} {:>12.2} {:>8.2}x",
+            size, scalar_us, simd_us, speedup
+        );
     }
     println!();
 
@@ -124,7 +128,7 @@ fn main() {
     // Process multiple times (simulating streaming)
     let iterations = 10;
     let start = Instant::now();
-    
+
     for _ in 0..iterations {
         manifold.snap_batch_simd_into(&vectors, &mut results);
     }
@@ -138,8 +142,10 @@ fn main() {
     println!("Total vectors: {}", total_vectors);
     println!("Total time: {:?}", total_time);
     println!("Throughput: {:.0} vectors/sec", throughput);
-    println!("Per-vector latency: {:.2} ns\n", 
-             total_time.as_nanos() as f64 / total_vectors as f64);
+    println!(
+        "Per-vector latency: {:.2} ns\n",
+        total_time.as_nanos() as f64 / total_vectors as f64
+    );
 
     // Example 5: SIMD for different manifold sizes
     println!("--- Example 5: SIMD vs Manifold Density ---");
@@ -153,8 +159,10 @@ fn main() {
         })
         .collect();
 
-    println!("{:>10} {:>12} {:>12} {:>8}", 
-             "Density", "Scalar (us)", "SIMD (us)", "Speedup");
+    println!(
+        "{:>10} {:>12} {:>12} {:>8}",
+        "Density", "Scalar (us)", "SIMD (us)", "Speedup"
+    );
     println!("{:-<10} {:->12} {:->12} {:->8}", "", "", "", "");
 
     for density in [50, 100, 200, 500] {
@@ -174,8 +182,10 @@ fn main() {
         let scalar_us = scalar_time.as_nanos() as f64 / 1000.0;
         let simd_us = simd_time.as_nanos() as f64 / 1000.0;
 
-        println!("{:>10} {:>12.2} {:>12.2} {:>8.2}x", 
-                 density, scalar_us, simd_us, speedup);
+        println!(
+            "{:>10} {:>12.2} {:>12.2} {:>8.2}x",
+            density, scalar_us, simd_us, speedup
+        );
     }
     println!();
 

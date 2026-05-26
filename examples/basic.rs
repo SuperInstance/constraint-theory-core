@@ -5,7 +5,7 @@
 //! - Snapping vectors to discrete Pythagorean coordinates
 //! - Understanding noise/resonance metrics
 
-use constraint_theory_core::{PythagoreanManifold, snap};
+use constraint_theory_core::{snap, PythagoreanManifold};
 
 fn main() {
     println!("=== Constraint Theory Core - Basic Example ===\n");
@@ -14,7 +14,7 @@ fn main() {
     // This generates ~1000 valid Pythagorean states
     let density = 200;
     let manifold = PythagoreanManifold::new(density);
-    
+
     println!("Created manifold with density {}", density);
     println!("Total valid states: {}\n", manifold.state_count());
 
@@ -22,7 +22,7 @@ fn main() {
     println!("--- Example 1: Exact Pythagorean Triple ---");
     let vector = [0.6_f32, 0.8_f32]; // 3/5, 4/5
     let (snapped, noise) = manifold.snap(vector);
-    
+
     println!("Input vector: {:?}", vector);
     println!("Snapped to:   {:?}", snapped);
     println!("Noise:        {:.6}", noise);
@@ -32,7 +32,7 @@ fn main() {
     println!("--- Example 2: Non-Pythagorean Vector ---");
     let vector = [0.707_f32, 0.707_f32]; // ~45 degrees, not Pythagorean
     let (snapped, noise) = manifold.snap(vector);
-    
+
     println!("Input vector: {:?}", vector);
     println!("Snapped to:   {:?}", snapped);
     println!("Noise:        {:.6}", noise);
@@ -42,7 +42,7 @@ fn main() {
     println!("--- Example 3: Using snap() function ---");
     let vector = [0.8_f32, 0.6_f32]; // 4/5, 3/5 (reversed)
     let (snapped, noise) = snap(&manifold, vector);
-    
+
     println!("Input vector: {:?}", vector);
     println!("Snapped to:   {:?}", snapped);
     println!("Noise:        {:.6}\n", noise);
@@ -74,22 +74,29 @@ fn main() {
     // Demonstrate noise calculation
     let exact_triple = [0.6, 0.8];
     let (_, noise_exact) = manifold.snap(exact_triple);
-    
+
     let approximate = [0.61, 0.79];
     let (_, noise_approx) = manifold.snap(approximate);
-    
-    println!("Exact triple {:?}: noise = {:.6}", exact_triple, noise_exact);
+
+    println!(
+        "Exact triple {:?}: noise = {:.6}",
+        exact_triple, noise_exact
+    );
     println!("Approximate {:?}: noise = {:.6}", approximate, noise_approx);
 
     // Example 6: Using different manifold densities
     println!("\n--- Example 6: Density Comparison ---");
     let test_vec = [0.707, 0.707];
-    
+
     for density in [50, 100, 200, 500] {
         let m = PythagoreanManifold::new(density);
         let (_, noise) = m.snap(test_vec);
-        println!("Density {:3}: {:4} states, noise = {:.6}", 
-                 density, m.state_count(), noise);
+        println!(
+            "Density {:3}: {:4} states, noise = {:.6}",
+            density,
+            m.state_count(),
+            noise
+        );
     }
 
     println!("\n=== Basic Example Complete ===");

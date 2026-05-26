@@ -355,14 +355,7 @@ mod tests {
     fn test_percolation_fully_connected() {
         let mut perc = FastPercolation::new(4);
         // Complete graph on 4 nodes
-        let edges = [
-            (0, 1),
-            (0, 2),
-            (0, 3),
-            (1, 2),
-            (1, 3),
-            (2, 3),
-        ];
+        let edges = [(0, 1), (0, 2), (0, 3), (1, 2), (1, 3), (2, 3)];
         let result = perc.compute_rigidity(&edges, 4);
 
         assert!(result.is_rigid);
@@ -452,7 +445,12 @@ mod tests {
             assert!(snapped[0].is_finite());
             assert!(snapped[1].is_finite());
             // Allow small epsilon for floating point precision
-            assert!((-0.001..=1.001).contains(&noise), "Noise {} out of range for vector {:?}", noise, vec);
+            assert!(
+                (-0.001..=1.001).contains(&noise),
+                "Noise {} out of range for vector {:?}",
+                noise,
+                vec
+            );
         }
     }
 

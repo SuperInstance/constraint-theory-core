@@ -10,7 +10,9 @@
 
 use constraint_theory_core::{
     cache::LatticeCache,
-    hidden_dimensions::{hidden_dim_count, lift_to_hidden, project_to_visible, HiddenDimensionConfig},
+    hidden_dimensions::{
+        hidden_dim_count, lift_to_hidden, project_to_visible, HiddenDimensionConfig,
+    },
     holonomy::{compute_holonomy, identity_matrix, verify_holonomy, HolonomyChecker},
     manifold::PythagoreanManifold,
     quantizer::{PythagoreanQuantizer, QuantizationMode, Rational},
@@ -29,8 +31,14 @@ fn main() {
     println!("╰─────────────────────────────────────────────────────────────╯\n");
 
     let manifold = PythagoreanManifold::new(200);
-    println!("Created manifold with {} valid states", manifold.state_count());
-    println!("Max angular error: {:.4}°\n", manifold.max_angular_error().to_degrees());
+    println!(
+        "Created manifold with {} valid states",
+        manifold.state_count()
+    );
+    println!(
+        "Max angular error: {:.4}°\n",
+        manifold.max_angular_error().to_degrees()
+    );
 
     let test_vectors = [
         ([0.6, 0.8], "3-4-5 triangle"),
@@ -40,7 +48,10 @@ fn main() {
 
     for (vec, name) in test_vectors {
         let (snapped, noise) = manifold.snap(vec);
-        println!("{:15}: {:?} -> {:?} (noise: {:.4})", name, vec, snapped, noise);
+        println!(
+            "{:15}: {:?} -> {:?} (noise: {:.4})",
+            name, vec, snapped, noise
+        );
     }
     println!();
 
@@ -143,8 +154,10 @@ fn main() {
     println!("  Max hypotenuse: {}", lattice.max_hypotenuse);
 
     let (nearest, idx, dist_sq) = lattice.nearest([0.6, 0.8]);
-    println!("  Nearest to [0.6, 0.8]: {:?} (index: {}, dist²: {:.6})\n", 
-             nearest, idx, dist_sq);
+    println!(
+        "  Nearest to [0.6, 0.8]: {:?} (index: {}, dist²: {:.6})\n",
+        nearest, idx, dist_sq
+    );
 
     // =========================================================================
     // Part 6: Full Pipeline Integration
@@ -154,13 +167,12 @@ fn main() {
     println!("╰─────────────────────────────────────────────────────────────╯\n");
 
     // Input data
-    let input_vectors: Vec<Vec<f64>> = vec![
-        vec![0.6, 0.8],
-        vec![0.707, 0.707],
-        vec![0.5, 0.866],
-    ];
+    let input_vectors: Vec<Vec<f64>> = vec![vec![0.6, 0.8], vec![0.707, 0.707], vec![0.5, 0.866]];
 
-    println!("Processing {} vectors through full pipeline:\n", input_vectors.len());
+    println!(
+        "Processing {} vectors through full pipeline:\n",
+        input_vectors.len()
+    );
 
     for (i, vector) in input_vectors.iter().enumerate() {
         println!("Vector {}: {:?}", i, vector);
@@ -210,7 +222,10 @@ fn main() {
     // Via manifold
     let manifold = PythagoreanManifold::new(200);
     let (m_snapped, m_noise) = manifold.snap([0.6, 0.8]);
-    println!("  Manifold snapped: {:?} (noise: {:.4})", m_snapped, m_noise);
+    println!(
+        "  Manifold snapped: {:?} (noise: {:.4})",
+        m_snapped, m_noise
+    );
 
     // Both should agree
     let agreement = (q_snapped - m_snapped[0] as f64).abs() < 0.01;

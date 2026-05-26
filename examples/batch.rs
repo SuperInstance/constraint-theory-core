@@ -44,17 +44,14 @@ fn main() {
 
     // Example 3: Convenience method
     println!("--- Example 3: Convenience Method ---");
-    let small_batch: Vec<[f32; 2]> = vec![
-        [0.6, 0.8],
-        [0.8, 0.6],
-        [0.707, 0.707],
-        [0.5, 0.866],
-    ];
-    
+    let small_batch: Vec<[f32; 2]> = vec![[0.6, 0.8], [0.8, 0.6], [0.707, 0.707], [0.5, 0.866]];
+
     let results = manifold.snap_batch_simd(&small_batch);
     for (i, (snapped, noise)) in results.iter().enumerate() {
-        println!("  Vector {}: {:?} -> {:?} (noise: {:.4})", 
-                 i, small_batch[i], snapped, noise);
+        println!(
+            "  Vector {}: {:?} -> {:?} (noise: {:.4})",
+            i, small_batch[i], snapped, noise
+        );
     }
     println!();
 
@@ -86,7 +83,7 @@ fn main() {
     println!("Batch size: {}", large_batch.len());
     println!("Scalar time: {:?}", scalar_time);
     println!("SIMD time:   {:?}", simd_time);
-    
+
     let speedup = scalar_time.as_secs_f64() / simd_time.as_secs_f64();
     println!("Speedup:     {:.2}x\n", speedup);
 
@@ -118,14 +115,20 @@ fn main() {
 
     println!("Processed {} vectors in {:?}", total_vectors, total_time);
     println!("Throughput: {:.0} vectors/sec", vectors_per_sec);
-    println!("Latency per vector: {:.2} ns\n", 
-             total_time.as_nanos() as f64 / total_vectors as f64);
+    println!(
+        "Latency per vector: {:.2} ns\n",
+        total_time.as_nanos() as f64 / total_vectors as f64
+    );
 
     // Example 6: Verify results consistency
     println!("--- Example 6: Verify Consistency ---");
     let test_vectors: Vec<[f32; 2]> = vec![
-        [0.6, 0.8], [0.8, 0.6], [0.707, 0.707],
-        [0.5, 0.866], [0.866, 0.5], [0.309, 0.951],
+        [0.6, 0.8],
+        [0.8, 0.6],
+        [0.707, 0.707],
+        [0.5, 0.866],
+        [0.866, 0.5],
+        [0.309, 0.951],
     ];
 
     let mut scalar_results = vec![([0.0, 0.0], 0.0f32); test_vectors.len()];
@@ -138,11 +141,11 @@ fn main() {
     for i in 0..test_vectors.len() {
         let s = scalar_results[i];
         let simd = simd_results[i];
-        
+
         let x_match = (s.0[0] - simd.0[0]).abs() < 0.001;
         let y_match = (s.0[1] - simd.0[1]).abs() < 0.001;
         let noise_match = (s.1 - simd.1).abs() < 0.001;
-        
+
         if !(x_match && y_match && noise_match) {
             println!("MISMATCH at index {}:", i);
             println!("  Scalar: {:?}", s);
@@ -152,7 +155,10 @@ fn main() {
     }
 
     if all_match {
-        println!("All {} results match between scalar and SIMD!", test_vectors.len());
+        println!(
+            "All {} results match between scalar and SIMD!",
+            test_vectors.len()
+        );
     }
 
     println!("\n=== Batch Processing Example Complete ===");

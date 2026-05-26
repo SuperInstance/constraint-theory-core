@@ -1,9 +1,10 @@
 #![allow(missing_docs)]
 
 /// Backtracking search with heuristics (MRV, LCV, FC, AC-3/MAC).
-
 use crate::ac3;
-use crate::csp::{Constraint, Constraint::Binary, ConstraintProblem, SolverConfig, SolverStats, Variable};
+use crate::csp::{
+    Constraint, Constraint::Binary, ConstraintProblem, SolverConfig, SolverStats, Variable,
+};
 use std::collections::HashMap;
 use std::time::Instant;
 
@@ -58,7 +59,10 @@ pub fn solve_bt_mac(problem: &ConstraintProblem) -> Option<HashMap<usize, i64>> 
 }
 
 /// Collect solver stats for a run.
-pub fn solve_with_stats(problem: &ConstraintProblem, config: &SolverConfig) -> (Option<HashMap<usize, i64>>, SolverStats) {
+pub fn solve_with_stats(
+    problem: &ConstraintProblem,
+    config: &SolverConfig,
+) -> (Option<HashMap<usize, i64>>, SolverStats) {
     let start = Instant::now();
     let mut stats = SolverStats::new();
     let mut domains: Vec<Domain> = problem.variables.iter().map(|v| v.domain.clone()).collect();
@@ -147,7 +151,11 @@ fn backtrack_mrv(
                 }
             })
             .collect();
-        return if problem.is_satisfied(&result) { Some(result) } else { None };
+        return if problem.is_satisfied(&result) {
+            Some(result)
+        } else {
+            None
+        };
     }
 
     let var = *unassigned.iter().min_by_key(|&&i| domains[i].len())?;
@@ -193,7 +201,11 @@ fn backtrack_mrv_fc(
                 }
             })
             .collect();
-        return if problem.is_satisfied(&result) { Some(result) } else { None };
+        return if problem.is_satisfied(&result) {
+            Some(result)
+        } else {
+            None
+        };
     }
 
     let var = *unassigned.iter().min_by_key(|&&i| domains[i].len())?;
@@ -247,7 +259,9 @@ fn backtrack_mrv_fc(
         }
 
         // Restore
-        for (d, s) in domains.iter_mut().zip(saved_domains.iter()) { *d = s.clone(); }
+        for (d, s) in domains.iter_mut().zip(saved_domains.iter()) {
+            *d = s.clone();
+        }
     }
     None
 }
@@ -272,7 +286,11 @@ fn backtrack_mrv_no_fc(
                 }
             })
             .collect();
-        return if problem.is_satisfied(&result) { Some(result) } else { None };
+        return if problem.is_satisfied(&result) {
+            Some(result)
+        } else {
+            None
+        };
     }
 
     let var = *unassigned.iter().min_by_key(|&&i| domains[i].len())?;
@@ -317,7 +335,11 @@ fn backtrack_mac(
                 }
             })
             .collect();
-        return if problem.is_satisfied(&result) { Some(result) } else { None };
+        return if problem.is_satisfied(&result) {
+            Some(result)
+        } else {
+            None
+        };
     }
 
     let var = *unassigned.iter().min_by_key(|&&i| domains[i].len())?;
@@ -338,21 +360,24 @@ fn backtrack_mac(
             stats.backtracks += 1;
         }
 
-        for (d, s) in domains.iter_mut().zip(saved_domains.iter()) { *d = s.clone(); }
+        for (d, s) in domains.iter_mut().zip(saved_domains.iter()) {
+            *d = s.clone();
+        }
     }
     None
 }
 
 /// Forward check: remove values from domains[b] incompatible with domains[a] (now fixed).
 /// Returns true if domain was pruned.
-fn forward_check(
-    problem: &ConstraintProblem,
-    domains: &mut [Domain],
-    a: usize,
-    b: usize,
-) -> bool {
+fn forward_check(problem: &ConstraintProblem, domains: &mut [Domain], a: usize, b: usize) -> bool {
     let check = problem.constraints.iter().find_map(|c| {
-        if let Binary { a: ca, b: cb, check, .. } = c {
+        if let Binary {
+            a: ca,
+            b: cb,
+            check,
+            ..
+        } = c
+        {
             if (*ca == a && *cb == b) || (*ca == b && *cb == a) {
                 return Some(*check);
             }
@@ -372,16 +397,17 @@ fn forward_check(
 }
 
 /// Count how many values in neighbor domains would be eliminated if var = val.
-fn count_conflicts(
-    problem: &ConstraintProblem,
-    domains: &[Domain],
-    var: usize,
-    val: i64,
-) -> usize {
+fn count_conflicts(problem: &ConstraintProblem, domains: &[Domain], var: usize, val: i64) -> usize {
     let mut conflicts = 0;
     for c in &problem.constraints {
         if let Binary { a, b, check, .. } = c {
-            let other = if *a == var { *b } else if *b == var { *a } else { continue };
+            let other = if *a == var {
+                *b
+            } else if *b == var {
+                *a
+            } else {
+                continue;
+            };
             let removed = domains[other].iter().filter(|&&ov| !check(val, ov)).count();
             conflicts += removed;
         }
@@ -392,7 +418,7 @@ fn count_conflicts(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::csp::{ConstraintProblem, Variable, Constraint, SolverConfig, neq_fn};
+    use crate::csp::{neq_fn, Constraint, ConstraintProblem, SolverConfig, Variable};
 
     fn simple_problem() -> ConstraintProblem {
         // x != y, x in {1,2}, y in {1,2}
@@ -401,7 +427,8 @@ mod tests {
             Variable::new("y", vec![1, 2]),
         ];
         let cs = vec![Constraint::Binary {
-            a: 0, b: 1,
+            a: 0,
+            b: 1,
             check: neq_fn,
             desc: "!=",
         }];
@@ -441,12 +468,10 @@ mod tests {
     #[test]
     fn test_unsat() {
         // x != y, x == 1, y == 1
-        let vars = vec![
-            Variable::new("x", vec![1]),
-            Variable::new("y", vec![1]),
-        ];
+        let vars = vec![Variable::new("x", vec![1]), Variable::new("y", vec![1])];
         let cs = vec![Constraint::Binary {
-            a: 0, b: 1,
+            a: 0,
+            b: 1,
             check: neq_fn,
             desc: "!=",
         }];

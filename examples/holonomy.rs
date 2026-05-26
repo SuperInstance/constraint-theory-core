@@ -11,8 +11,8 @@
 
 use constraint_theory_core::{
     holonomy::{
-        compute_holonomy, compute_edge_holonomy, identity_matrix, rotation_x, rotation_y,
-        rotation_z, rotation_from_euler, verify_holonomy, triangular_holonomy, HolonomyChecker,
+        compute_edge_holonomy, compute_holonomy, identity_matrix, rotation_from_euler, rotation_x,
+        rotation_y, rotation_z, triangular_holonomy, verify_holonomy, HolonomyChecker,
     },
     PythagoreanManifold,
 };
@@ -41,7 +41,10 @@ fn main() {
     println!("Two 180° rotations around Z axis:");
     println!("  Holonomy norm: {:.6}", result.norm);
     println!("  Is identity: {}", result.is_identity());
-    println!("  Angular deviation: {:.4} radians\n", result.angular_deviation());
+    println!(
+        "  Angular deviation: {:.4} radians\n",
+        result.angular_deviation()
+    );
 
     // Example 3: 90-degree rotation doesn't return
     println!("--- Example 3: Incomplete Rotation ---");
@@ -51,9 +54,11 @@ fn main() {
     println!("Single 90° rotation around Z axis:");
     println!("  Holonomy norm: {:.6}", result.norm);
     println!("  Is identity: {}", result.is_identity());
-    println!("  Angular deviation: {:.4} radians ({:.1}°)\n", 
-             result.angular_deviation(), 
-             result.angular_deviation().to_degrees());
+    println!(
+        "  Angular deviation: {:.4} radians ({:.1}°)\n",
+        result.angular_deviation(),
+        result.angular_deviation().to_degrees()
+    );
 
     // Example 4: Rotation matrix generation
     println!("--- Example 4: Rotation Matrices ---");
@@ -103,15 +108,23 @@ fn main() {
     // Example 7: Verify multiple cycles
     println!("--- Example 7: Verify Multiple Cycles ---");
     let cycles = vec![
-        vec![identity_matrix()],                                    // Identity cycle
-        vec![rotation_x(std::f64::consts::PI), 
-             rotation_x(std::f64::consts::PI)],                    // Full X rotation
-        vec![rotation_y(std::f64::consts::PI), 
-             rotation_y(std::f64::consts::PI)],                    // Full Y rotation
+        vec![identity_matrix()], // Identity cycle
+        vec![
+            rotation_x(std::f64::consts::PI),
+            rotation_x(std::f64::consts::PI),
+        ], // Full X rotation
+        vec![
+            rotation_y(std::f64::consts::PI),
+            rotation_y(std::f64::consts::PI),
+        ], // Full Y rotation
     ];
 
     let all_zero = verify_holonomy(&cycles, 1e-6);
-    println!("All {} cycles have zero holonomy: {}", cycles.len(), all_zero);
+    println!(
+        "All {} cycles have zero holonomy: {}",
+        cycles.len(),
+        all_zero
+    );
     println!();
 
     // Example 8: Triangular holonomy
@@ -128,10 +141,7 @@ fn main() {
 
     // Example 9: Edge-based holonomy
     println!("--- Example 9: Edge-Based Holonomy ---");
-    let edges = vec![
-        rotation_x(0.5),
-        rotation_y(0.5),
-    ];
+    let edges = vec![rotation_x(0.5), rotation_y(0.5)];
 
     let result_open = compute_edge_holonomy(&edges, false);
     let result_closed = compute_edge_holonomy(&edges, true);
@@ -151,9 +161,21 @@ fn main() {
     let v3 = manifold.snap([1.0, 0.0]).0;
 
     println!("Snapped vectors (should be unit norm):");
-    println!("  v1 = {:?}, norm = {:.4}", v1, (v1[0]*v1[0] + v1[1]*v1[1]).sqrt());
-    println!("  v2 = {:?}, norm = {:.4}", v2, (v2[0]*v2[0] + v2[1]*v2[1]).sqrt());
-    println!("  v3 = {:?}, norm = {:.4}", v3, (v3[0]*v3[0] + v3[1]*v3[1]).sqrt());
+    println!(
+        "  v1 = {:?}, norm = {:.4}",
+        v1,
+        (v1[0] * v1[0] + v1[1] * v1[1]).sqrt()
+    );
+    println!(
+        "  v2 = {:?}, norm = {:.4}",
+        v2,
+        (v2[0] * v2[0] + v2[1] * v2[1]).sqrt()
+    );
+    println!(
+        "  v3 = {:?}, norm = {:.4}",
+        v3,
+        (v3[0] * v3[0] + v3[1] * v3[1]).sqrt()
+    );
 
     // These unit vectors satisfy the unit norm constraint consistently
     println!("\nUnit norm constraint is satisfied consistently.");

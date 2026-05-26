@@ -13,6 +13,7 @@
 //! ```
 
 use constraint_theory_core::{
+    hidden_dimensions, // Module-level import for encode_with_hidden_dims
     hidden_dimensions::{
         hidden_dim_count, holographic_accuracy, lift_to_hidden, precision_from_hidden_dims,
         project_to_visible, HiddenDimensionConfig,
@@ -23,7 +24,6 @@ use constraint_theory_core::{
     },
     manifold::{snap, PythagoreanManifold, PythagoreanTriple},
     quantizer::{PythagoreanQuantizer, QuantizationMode, Rational},
-    hidden_dimensions, // Module-level import for encode_with_hidden_dims
 };
 
 // ============================================================================
@@ -56,8 +56,8 @@ mod hidden_dimensions_quantizer {
     #[test]
     fn test_quantize_then_project() {
         let point = vec![0.577, 0.816]; // Close to sqrt(1/3), sqrt(2/3)
-        // Use large epsilon (small k) so hidden dims don't dominate the norm
-        // and distort visible components beyond the 0.5 tolerance.
+                                        // Use large epsilon (small k) so hidden dims don't dominate the norm
+                                        // and distort visible components beyond the 0.5 tolerance.
         let epsilon = 0.1;
         let k = hidden_dim_count(epsilon); // k = 4
 
@@ -78,13 +78,7 @@ mod hidden_dimensions_quantizer {
     #[test]
     fn test_hidden_dim_precision_consistency() {
         // For various epsilon values, verify k = ceil(log2(1/epsilon))
-        let test_cases = [
-            (0.1, 4),
-            (0.01, 7),
-            (0.001, 10),
-            (1e-6, 20),
-            (1e-10, 34),
-        ];
+        let test_cases = [(0.1, 4), (0.01, 7), (0.001, 10), (1e-6, 20), (1e-10, 34)];
 
         for (epsilon, expected_k) in test_cases {
             let k = hidden_dim_count(epsilon);
@@ -120,11 +114,7 @@ mod hidden_dimensions_quantizer {
     /// Test full encoding pipeline with quantization
     #[test]
     fn test_full_encoding_pipeline() {
-        let points = vec![
-            vec![0.6, 0.8],
-            vec![0.8, 0.6],
-            vec![0.707, 0.707],
-        ];
+        let points = vec![vec![0.6, 0.8], vec![0.8, 0.6], vec![0.707, 0.707]];
 
         let config = HiddenDimensionConfig::new(1e-6);
 
@@ -200,7 +190,10 @@ mod holonomy_manifold {
         // Identity cycle - should have zero holonomy
         let id = identity_matrix();
         let result = compute_holonomy(&[id]);
-        assert!(result.is_identity(), "Identity cycle should have zero holonomy");
+        assert!(
+            result.is_identity(),
+            "Identity cycle should have zero holonomy"
+        );
 
         // Multiple identities should still be identity
         let result = compute_holonomy(&[id, id, id]);
@@ -338,15 +331,15 @@ mod quantizer_manifold {
         ];
 
         for r in pythagorean_rationals {
-            assert!(
-                r.is_pythagorean(),
-                "Rational {:?} should be Pythagorean",
-                r
-            );
+            assert!(r.is_pythagorean(), "Rational {:?} should be Pythagorean", r);
         }
 
         // Test non-Pythagorean rationals
-        let non_pythagorean = vec![Rational::new(1, 3), Rational::new(2, 7), Rational::new(1, 2)];
+        let non_pythagorean = vec![
+            Rational::new(1, 3),
+            Rational::new(2, 7),
+            Rational::new(1, 2),
+        ];
 
         for r in non_pythagorean {
             assert!(
@@ -422,8 +415,7 @@ mod full_pipeline {
             let projected = project_to_visible(&result.data, point.len());
 
             // Verify via manifold
-            let (snapped, noise) =
-                manifold.snap([projected[0] as f32, projected[1] as f32]);
+            let (snapped, noise) = manifold.snap([projected[0] as f32, projected[1] as f32]);
 
             // All should be valid snaps
             let norm = (snapped[0] * snapped[0] + snapped[1] * snapped[1]).sqrt();
@@ -497,7 +489,11 @@ mod edge_cases {
         let k = hidden_dim_count(epsilon);
 
         // Should be a large number of hidden dimensions
-        assert!(k > 50, "Small epsilon should require many hidden dims: {}", k);
+        assert!(
+            k > 50,
+            "Small epsilon should require many hidden dims: {}",
+            k
+        );
 
         // Precision should be at least as good as epsilon
         let precision = precision_from_hidden_dims(k);
@@ -516,7 +512,11 @@ mod edge_cases {
         let k = hidden_dim_count(epsilon);
 
         // Should be small number of hidden dimensions
-        assert!(k <= 2, "Large epsilon should require few hidden dims: {}", k);
+        assert!(
+            k <= 2,
+            "Large epsilon should require few hidden dims: {}",
+            k
+        );
     }
 
     /// Test empty cycle holonomy
@@ -576,7 +576,12 @@ mod performance {
 
         let manifold = PythagoreanManifold::new(200);
         let vectors: Vec<[f32; 2]> = (0..1000)
-            .map(|i| [(i as f32 % 100.0) / 100.0, ((i + 50) as f32 % 100.0) / 100.0])
+            .map(|i| {
+                [
+                    (i as f32 % 100.0) / 100.0,
+                    ((i + 50) as f32 % 100.0) / 100.0,
+                ]
+            })
             .collect();
 
         // SIMD batch
@@ -592,10 +597,7 @@ mod performance {
 
         // SIMD should be faster (or at least not much slower)
         // Allow some overhead for small batches
-        println!(
-            "SIMD: {:?}, Scalar: {:?}",
-            simd_duration, scalar_duration
-        );
+        println!("SIMD: {:?}, Scalar: {:?}", simd_duration, scalar_duration);
     }
 
     /// Test quantization batch performance
@@ -659,7 +661,9 @@ mod properties {
         let quantizer = PythagoreanQuantizer::hybrid();
 
         for n in [2, 4, 8, 16, 32] {
-            let data: Vec<f64> = (0..n).map(|i| (i as f64 + 1.0) / (n as f64 + 1.0)).collect();
+            let data: Vec<f64> = (0..n)
+                .map(|i| (i as f64 + 1.0) / (n as f64 + 1.0))
+                .collect();
             let result = quantizer.quantize(&data);
 
             assert_eq!(

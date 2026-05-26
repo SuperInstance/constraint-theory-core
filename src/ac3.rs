@@ -1,8 +1,7 @@
 #![allow(missing_docs)]
 
 /// AC-3 arc consistency algorithm.
-
-use crate::csp::{Constraint, ConstraintProblem, Constraint::Binary};
+use crate::csp::{Constraint, Constraint::Binary, ConstraintProblem};
 use std::collections::{HashSet, VecDeque};
 
 type Domain = Vec<i64>;
@@ -89,17 +88,15 @@ fn revise(problem: &ConstraintProblem, domains: &mut [Domain], xi: usize, xj: us
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::csp::{ConstraintProblem, Variable, Constraint, lt_fn, neq_fn};
+    use crate::csp::{lt_fn, neq_fn, Constraint, ConstraintProblem, Variable};
 
     #[test]
     fn test_ac3_basic() {
         // Two vars: x != y
-        let vars = vec![
-            Variable::range("x", 1, 3),
-            Variable::range("y", 1, 3),
-        ];
+        let vars = vec![Variable::range("x", 1, 3), Variable::range("y", 1, 3)];
         let cs = vec![Constraint::Binary {
-            a: 0, b: 1,
+            a: 0,
+            b: 1,
             check: neq_fn,
             desc: "!=",
         }];
@@ -114,12 +111,10 @@ mod tests {
     #[test]
     fn test_ac3_unsat() {
         // Two vars with domains {1}, {1}, and x != y
-        let vars = vec![
-            Variable::new("x", vec![1]),
-            Variable::new("y", vec![1]),
-        ];
+        let vars = vec![Variable::new("x", vec![1]), Variable::new("y", vec![1])];
         let cs = vec![Constraint::Binary {
-            a: 0, b: 1,
+            a: 0,
+            b: 1,
             check: neq_fn,
             desc: "!=",
         }];
@@ -138,7 +133,8 @@ mod tests {
             Variable::new("y", vec![2, 3, 4]),
         ];
         let cs = vec![Constraint::Binary {
-            a: 0, b: 1,
+            a: 0,
+            b: 1,
             check: lt_fn,
             desc: "<",
         }];

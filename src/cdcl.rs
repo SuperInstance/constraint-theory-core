@@ -4,7 +4,6 @@
 ///
 /// Simplified CDCL with 1-UIP learning scheme and non-chronological backtracking.
 /// Operates on SAT problems (boolean variables) and can be extended to CSPs.
-
 use std::collections::{HashMap, HashSet, VecDeque};
 use std::fmt;
 
@@ -33,7 +32,10 @@ pub struct Clause {
 
 impl Clause {
     pub fn new(lits: Vec<Lit>) -> Self {
-        Clause { lits, learnt: false }
+        Clause {
+            lits,
+            learnt: false,
+        }
     }
 
     pub fn learnt(lits: Vec<Lit>) -> Self {
@@ -41,9 +43,9 @@ impl Clause {
     }
 
     pub fn is_satisfied(&self, assignment: &HashMap<i64, bool>) -> bool {
-        self.lits.iter().any(|l| {
-            assignment.get(&l.var()) == Some(&l.sign())
-        })
+        self.lits
+            .iter()
+            .any(|l| assignment.get(&l.var()) == Some(&l.sign()))
     }
 
     pub fn is_unit(&self, assignment: &HashMap<i64, bool>) -> Option<Lit> {
@@ -51,7 +53,7 @@ impl Clause {
         for &l in &self.lits {
             match assignment.get(&l.var()) {
                 Some(&v) if v == l.sign() => return None, // satisfied
-                Some(_) => continue, // falsified
+                Some(_) => continue,                      // falsified
                 None => {
                     if unassigned.is_some() {
                         return None; // >1 unassigned
@@ -64,9 +66,9 @@ impl Clause {
     }
 
     pub fn is_conflict(&self, assignment: &HashMap<i64, bool>) -> bool {
-        self.lits.iter().all(|l| {
-            assignment.get(&l.var()) == Some(&(!l.sign()))
-        })
+        self.lits
+            .iter()
+            .all(|l| assignment.get(&l.var()) == Some(&(!l.sign())))
     }
 }
 
@@ -79,14 +81,17 @@ pub struct SATProblem {
 
 impl SATProblem {
     pub fn new(clauses: Vec<Clause>) -> Self {
-        let num_vars = clauses.iter()
+        let num_vars = clauses
+            .iter()
             .flat_map(|c| c.lits.iter().map(|l| l.var()))
             .max()
             .unwrap_or(0);
         SATProblem { clauses, num_vars }
     }
 
-    pub fn num_vars(&self) -> i64 { self.num_vars }
+    pub fn num_vars(&self) -> i64 {
+        self.num_vars
+    }
 }
 
 /// Decision level tracking for a variable.
@@ -102,7 +107,7 @@ struct Assignment {
 pub struct CDCL {
     pub assignment: HashMap<i64, bool>,
     pub trail: Vec<(i64, bool)>, // (var, value) in order of assignment
-    pub trail_lim: Vec<usize>, // decision level boundaries in trail
+    pub trail_lim: Vec<usize>,   // decision level boundaries in trail
     pub clauses: Vec<Clause>,
     antecedents: HashMap<i64, usize>, // var -> clause index that implied it
     learnts: Vec<usize>,
@@ -145,7 +150,13 @@ impl CDCL {
     /// Decide: pick an unassigned literal and assign it.
     pub fn decide(&mut self) -> Option<Lit> {
         // Find an unassigned variable
-        for i in 1..=self.clauses.iter().flat_map(|c| c.lits.iter().map(|l| l.var())).max().unwrap_or(0) {
+        for i in 1..=self
+            .clauses
+            .iter()
+            .flat_map(|c| c.lits.iter().map(|l| l.var()))
+            .max()
+            .unwrap_or(0)
+        {
             if !self.assignment.contains_key(&i) {
                 // Decide positive
                 self.trail_lim.push(self.trail.len());
@@ -174,8 +185,12 @@ impl CDCL {
                     conf = clause.is_conflict(&self.assignment);
                     unit = clause.is_unit(&self.assignment);
                 }
-                if sat { continue; }
-                if conf { return Some(ci); }
+                if sat {
+                    continue;
+                }
+                if conf {
+                    return Some(ci);
+                }
                 if let Some(lit) = unit {
                     if !self.enqueue(lit, Some(ci)) {
                         return Some(ci);
@@ -206,9 +221,8 @@ impl CDCL {
                 if seen.insert(v) {
                     if self.antecedents.contains_key(&v) {
                         // Only count literals from current decision level
-                        let assigned_at = self.trail.iter()
-                            .rposition(|&(tv, _)| tv == v)
-                            .unwrap_or(0);
+                        let assigned_at =
+                            self.trail.iter().rposition(|&(tv, _)| tv == v).unwrap_or(0);
                         // Find decision level for this trail position
                         let dl = self.level_of_trail_index(assigned_at);
                         if dl == self.current_level() {
@@ -245,7 +259,11 @@ impl CDCL {
 
         // Remove current-level literals from learnt clause except the UIP
         let final_lit = if lit_ptr < self.trail.len() {
-            Lit(if self.trail[lit_ptr].1 { self.trail[lit_ptr].0 } else { -self.trail[lit_ptr].0 })
+            Lit(if self.trail[lit_ptr].1 {
+                self.trail[lit_ptr].0
+            } else {
+                -self.trail[lit_ptr].0
+            })
         } else {
             learnt[0]
         };
@@ -255,10 +273,15 @@ impl CDCL {
         });
         learnt.push(final_lit.not());
 
-        let bt_level = learnt.iter()
+        let bt_level = learnt
+            .iter()
             .filter_map(|&l| {
                 let dl = self.level_of_var(l.var());
-                if dl < self.current_level() { Some(dl) } else { None }
+                if dl < self.current_level() {
+                    Some(dl)
+                } else {
+                    None
+                }
             })
             .max()
             .unwrap_or(0);
@@ -327,9 +350,12 @@ impl CDCL {
                     Some(_) => continue,
                     None => {
                         // All assigned — check if model is complete
-                        let max_var = self.clauses.iter()
+                        let max_var = self
+                            .clauses
+                            .iter()
                             .flat_map(|c| c.lits.iter().map(|l| l.var()))
-                            .max().unwrap_or(0);
+                            .max()
+                            .unwrap_or(0);
                         for i in 1..=max_var {
                             if !self.assignment.contains_key(&i) {
                                 self.enqueue(Lit(i), None);
@@ -370,10 +396,7 @@ mod tests {
     #[test]
     fn test_unsat() {
         // (x) AND (NOT x)
-        let clauses = vec![
-            Clause::new(vec![Lit(1)]),
-            Clause::new(vec![Lit(-1)]),
-        ];
+        let clauses = vec![Clause::new(vec![Lit(1)]), Clause::new(vec![Lit(-1)])];
         let p = SATProblem::new(clauses);
         let mut solver = CDCL::new(&p);
         let result = solver.solve();

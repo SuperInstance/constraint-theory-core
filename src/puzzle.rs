@@ -1,9 +1,10 @@
 #![allow(missing_docs)]
 
 /// Built-in puzzle definitions and solvers.
-
 use crate::backtracking;
-use crate::csp::{Constraint, ConstraintProblem, Constraint::Binary, SolverConfig, SolverStats, Variable};
+use crate::csp::{
+    Constraint, Constraint::Binary, ConstraintProblem, SolverConfig, SolverStats, Variable,
+};
 use std::collections::HashMap;
 
 /// N-Queens diagonal check: |v[i] - v[j]| != |i - j| for all i != j.
@@ -124,20 +125,37 @@ pub fn solve_sudoku4x4() -> Option<Vec<i64>> {
     Some(vals.into_iter().map(|(_, v)| v).collect())
 }
 
-fn neq_fn(x: i64, y: i64) -> bool { x != y }
-fn diag_fn(x: i64, y: i64) -> bool { true } // placeholder
+fn neq_fn(x: i64, y: i64) -> bool {
+    x != y
+}
+fn diag_fn(x: i64, y: i64) -> bool {
+    true
+} // placeholder
 
 /// Build a graph k-coloring problem.
-pub fn graph_coloring_problem(adjacency: &[(usize, usize)], num_colors: usize) -> ConstraintProblem {
-    let max_node = adjacency.iter().flat_map(|&(a, b)| vec![a, b]).max().unwrap_or(0) + 1;
+pub fn graph_coloring_problem(
+    adjacency: &[(usize, usize)],
+    num_colors: usize,
+) -> ConstraintProblem {
+    let max_node = adjacency
+        .iter()
+        .flat_map(|&(a, b)| vec![a, b])
+        .max()
+        .unwrap_or(0)
+        + 1;
     let mut vars = Vec::new();
     for i in 0..max_node {
-        vars.push(Variable::range(&format!("V{}", i), 0, num_colors as i64 - 1));
+        vars.push(Variable::range(
+            &format!("V{}", i),
+            0,
+            num_colors as i64 - 1,
+        ));
     }
     let mut cs = Vec::new();
     for &(a, b) in adjacency {
         cs.push(Constraint::Binary {
-            a, b,
+            a,
+            b,
             check: neq_fn,
             desc: "!=",
         });
@@ -146,7 +164,10 @@ pub fn graph_coloring_problem(adjacency: &[(usize, usize)], num_colors: usize) -
 }
 
 /// Solve graph coloring.
-pub fn solve_graph_coloring(adjacency: &[(usize, usize)], num_colors: usize) -> Option<HashMap<usize, i64>> {
+pub fn solve_graph_coloring(
+    adjacency: &[(usize, usize)],
+    num_colors: usize,
+) -> Option<HashMap<usize, i64>> {
     let p = graph_coloring_problem(adjacency, num_colors);
     backtracking::solve_bt_fc(&p)
 }

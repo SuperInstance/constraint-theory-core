@@ -123,11 +123,7 @@ pub fn holographic_accuracy(k: usize, n: usize) -> f64 {
     }
     let base_accuracy = k as f64 / n as f64;
     // O(1/log n) correction term
-    let correction = if n > 1 {
-        1.0 / (n as f64).ln()
-    } else {
-        0.0
-    };
+    let correction = if n > 1 { 1.0 / (n as f64).ln() } else { 0.0 };
     (base_accuracy + correction).min(1.0)
 }
 
@@ -157,10 +153,10 @@ pub fn holographic_accuracy(k: usize, n: usize) -> f64 {
 pub fn lift_to_hidden(point: &[f64], k: usize) -> Vec<f64> {
     let n = point.len();
     let mut lifted = Vec::with_capacity(n + k);
-    
+
     // Copy visible dimensions
     lifted.extend_from_slice(point);
-    
+
     // Initialize hidden dimensions
     // These encode the constraint residuals for exact satisfaction
     for i in 0..k {
@@ -169,7 +165,7 @@ pub fn lift_to_hidden(point: &[f64], k: usize) -> Vec<f64> {
         let hidden_val = 2.0_f64.powi(-(i as i32 + 1));
         lifted.push(hidden_val);
     }
-    
+
     lifted
 }
 
@@ -237,15 +233,15 @@ pub fn project_to_visible(lifted: &[f64], n: usize) -> Vec<f64> {
 pub fn encode_with_hidden_dims(point: &[f64], epsilon: f64) -> Vec<f64> {
     let n = point.len();
     let k = hidden_dim_count(epsilon);
-    
+
     // Lift to hidden dimensions
     let lifted = lift_to_hidden(point, k);
-    
+
     // Snap to lattice in lifted space
     // For now, we use a simple normalization snap
     // TODO: Integrate with full Pythagorean lattice when available
     let snapped = snap_to_lattice(&lifted);
-    
+
     // Project back to visible dimensions
     project_to_visible(&snapped, n)
 }
@@ -265,13 +261,16 @@ pub fn encode_with_hidden_dims(point: &[f64], epsilon: f64) -> Vec<f64> {
 fn snap_to_lattice(point: &[f64]) -> Vec<f64> {
     // Compute norm for normalization
     let norm: f64 = point.iter().map(|x| x * x).sum::<f64>().sqrt();
-    
+
     if norm < 1e-10 {
         return point.to_vec();
     }
-    
+
     // Normalize and snap each component to nearest simple rational
-    point.iter().map(|&x| snap_to_rational(x / norm) * norm).collect()
+    point
+        .iter()
+        .map(|&x| snap_to_rational(x / norm) * norm)
+        .collect()
 }
 
 /// Snap a value to a nearby simple rational number.
@@ -288,25 +287,38 @@ fn snap_to_lattice(point: &[f64]) -> Vec<f64> {
 fn snap_to_rational(value: f64) -> f64 {
     // Common Pythagorean ratios from primitive triples
     let pythagorean_ratios: &[f64] = &[
-        0.0, 1.0,
-        3.0/5.0, 4.0/5.0,  // 3-4-5 triangle
-        5.0/13.0, 12.0/13.0,  // 5-12-13 triangle
-        8.0/17.0, 15.0/17.0,  // 8-15-17 triangle
-        7.0/25.0, 24.0/25.0,  // 7-24-25 triangle
-        20.0/29.0, 21.0/29.0, // 20-21-29 triangle
-        9.0/41.0, 40.0/41.0,  // 9-40-41 triangle
-        12.0/37.0, 35.0/37.0, // 12-35-37 triangle
-        11.0/61.0, 60.0/61.0, // 11-60-61 triangle
-        28.0/53.0, 45.0/53.0, // 28-45-53 triangle
-        33.0/65.0, 56.0/65.0, // 33-56-65 triangle
-        16.0/65.0, 63.0/65.0, // 16-63-65 triangle
-        0.5, 0.7071067811865476, // Common ratios (sqrt(2)/2)
+        0.0,
+        1.0,
+        3.0 / 5.0,
+        4.0 / 5.0, // 3-4-5 triangle
+        5.0 / 13.0,
+        12.0 / 13.0, // 5-12-13 triangle
+        8.0 / 17.0,
+        15.0 / 17.0, // 8-15-17 triangle
+        7.0 / 25.0,
+        24.0 / 25.0, // 7-24-25 triangle
+        20.0 / 29.0,
+        21.0 / 29.0, // 20-21-29 triangle
+        9.0 / 41.0,
+        40.0 / 41.0, // 9-40-41 triangle
+        12.0 / 37.0,
+        35.0 / 37.0, // 12-35-37 triangle
+        11.0 / 61.0,
+        60.0 / 61.0, // 11-60-61 triangle
+        28.0 / 53.0,
+        45.0 / 53.0, // 28-45-53 triangle
+        33.0 / 65.0,
+        56.0 / 65.0, // 33-56-65 triangle
+        16.0 / 65.0,
+        63.0 / 65.0, // 16-63-65 triangle
+        0.5,
+        0.7071067811865476, // Common ratios (sqrt(2)/2)
     ];
-    
+
     // Find nearest ratio
     let mut best = value;
     let mut min_dist = f64::MAX;
-    
+
     for &ratio in pythagorean_ratios {
         let dist = (value - ratio).abs();
         if dist < min_dist {
@@ -314,7 +326,7 @@ fn snap_to_rational(value: f64) -> f64 {
             best = ratio;
         }
     }
-    
+
     // Also consider negative ratios for full circle coverage
     for &ratio in pythagorean_ratios {
         let dist = (value - (-ratio)).abs();
@@ -323,7 +335,7 @@ fn snap_to_rational(value: f64) -> f64 {
             best = -ratio;
         }
     }
-    
+
     best
 }
 
@@ -360,7 +372,7 @@ impl HiddenDimensionConfig {
             cross_plane_optimization: true,
         }
     }
-    
+
     /// Create a configuration with explicit hidden dimension count.
     ///
     /// # Arguments
@@ -373,7 +385,7 @@ impl HiddenDimensionConfig {
             cross_plane_optimization: true,
         }
     }
-    
+
     /// Encode a point using this configuration.
     ///
     /// # Arguments
@@ -405,22 +417,22 @@ pub fn cross_plane_finetune(point: &[f64], planes: &[[usize; 2]]) -> Vec<f64> {
     if planes.is_empty() {
         return point.to_vec();
     }
-    
+
     let mut best_point = point.to_vec();
     let mut best_error = constraint_error(&best_point);
-    
+
     for plane in planes {
         // Snap on this plane
         let mut snapped = point.to_vec();
         if plane[0] < point.len() && plane[1] < point.len() {
             let (a, b) = (point[plane[0]], point[plane[1]]);
             let norm = (a * a + b * b).sqrt().max(1e-10);
-            
+
             // Normalize this plane's components
             snapped[plane[0]] = a / norm;
             snapped[plane[1]] = b / norm;
         }
-        
+
         // Check if this is better
         let error = constraint_error(&snapped);
         if error < best_error {
@@ -428,7 +440,7 @@ pub fn cross_plane_finetune(point: &[f64], planes: &[[usize; 2]]) -> Vec<f64> {
             best_point = snapped;
         }
     }
-    
+
     best_point
 }
 
@@ -467,7 +479,12 @@ mod tests {
         for &eps in &[0.1, 0.01, 0.001, 1e-10] {
             let k = hidden_dim_count(eps);
             let computed_eps = precision_from_hidden_dims(k);
-            assert!(computed_eps <= eps, "Precision {} should be <= {}", computed_eps, eps);
+            assert!(
+                computed_eps <= eps,
+                "Precision {} should be <= {}",
+                computed_eps,
+                eps
+            );
         }
     }
 
@@ -484,7 +501,8 @@ mod tests {
         assert!(acc < 0.5, "acc = {}", acc);
 
         // With half hidden dimensions
-        let acc = holographic_accuracy(5, 10); println!("acc(5,10) = {}", acc);
+        let acc = holographic_accuracy(5, 10);
+        println!("acc(5,10) = {}", acc);
         assert!(acc > 0.7 && acc < 1.0);
     }
 
@@ -526,7 +544,7 @@ mod tests {
         let point = vec![0.577, 0.816]; // Close to 3-5-sqrt(34)
         let planes = [[0, 1], [0, 1]]; // Just the XY plane
         let optimized = cross_plane_finetune(&point, &planes);
-        
+
         // Should be normalized
         let norm: f64 = optimized.iter().map(|x| x * x).sum::<f64>().sqrt();
         assert!((norm - 1.0).abs() < 0.1);

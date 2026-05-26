@@ -1,7 +1,6 @@
 #![allow(missing_docs)]
 
 /// Core constraint satisfaction types.
-
 use std::collections::HashMap;
 use std::fmt;
 use std::time::Instant;
@@ -15,11 +14,17 @@ pub struct Variable {
 
 impl Variable {
     pub fn new(name: &str, domain: Vec<i64>) -> Self {
-        Variable { name: name.to_string(), domain }
+        Variable {
+            name: name.to_string(),
+            domain,
+        }
     }
 
     pub fn range(name: &str, lo: i64, hi: i64) -> Self {
-        Variable { name: name.to_string(), domain: (lo..=hi).collect() }
+        Variable {
+            name: name.to_string(),
+            domain: (lo..=hi).collect(),
+        }
     }
 }
 
@@ -96,7 +101,11 @@ impl ConstraintProblem {
         for (i, v) in variables.iter().enumerate() {
             domain_index.insert(v.name.clone(), i);
         }
-        ConstraintProblem { variables, constraints, domain_index }
+        ConstraintProblem {
+            variables,
+            constraints,
+            domain_index,
+        }
     }
 
     pub fn var_index(&self, name: &str) -> Option<usize> {
@@ -138,14 +147,20 @@ impl ConstraintProblem {
         for c in &self.constraints {
             match c {
                 Constraint::Unary { var, check, .. } => {
-                    if !check(assignment[var]) { return false; }
+                    if !check(assignment[var]) {
+                        return false;
+                    }
                 }
                 Constraint::Binary { a, b, check, .. } => {
-                    if !check(assignment[a], assignment[b]) { return false; }
+                    if !check(assignment[a], assignment[b]) {
+                        return false;
+                    }
                 }
                 Constraint::Nary { vars, check, .. } => {
                     let vals: Vec<i64> = vars.iter().map(|v| assignment[v]).collect();
-                    if !check(&vals) { return false; }
+                    if !check(&vals) {
+                        return false;
+                    }
                 }
             }
         }
@@ -166,7 +181,10 @@ impl ConstraintProblem {
     }
 
     pub fn constraints_involving(&self, var: usize) -> Vec<&Constraint> {
-        self.constraints.iter().filter(|c| c.involves(var)).collect()
+        self.constraints
+            .iter()
+            .filter(|c| c.involves(var))
+            .collect()
     }
 
     /// Build an all-different (pairwise !=) binary constraint set.
@@ -207,9 +225,15 @@ impl ConstraintProblem {
 }
 
 /// Non-capturing fn pointers for binary constraints.
-pub fn neq_fn(x: i64, y: i64) -> bool { x != y }
-pub fn eq_fn(x: i64, y: i64) -> bool { x == y }
-pub fn lt_fn(x: i64, y: i64) -> bool { x < y }
+pub fn neq_fn(x: i64, y: i64) -> bool {
+    x != y
+}
+pub fn eq_fn(x: i64, y: i64) -> bool {
+    x == y
+}
+pub fn lt_fn(x: i64, y: i64) -> bool {
+    x < y
+}
 
 /// Queen diagonal check: |v[0] - v[1]| != |idx0 - idx1|
 /// The actual row diff is computed at runtime from the values.
@@ -226,7 +250,7 @@ pub fn queen_diag_fn(vals: &[i64]) -> bool {
 /// Works as: |q[a] - q[b]| != d. Since `check` can't capture `d`, we encode it
 /// differently: the Nary check receives only the values, so we use a trick:
 /// pass (value, index) pairs as tuple. No, that doesn't work either.
-/// 
+///
 /// Solution: `queen_diag` returns nothing. Instead, the nqueens_problem function
 /// in puzzle.rs will use a different encoding. The diagonal info is embedded
 /// in the constraint via variable ordering.
@@ -275,15 +299,30 @@ impl SolverStats {
 
 /// Helper: binary constraint for 'not equal'.
 pub fn neq(a: usize, b: usize) -> Constraint {
-    Constraint::Binary { a, b, check: neq_fn, desc: "!=" }
+    Constraint::Binary {
+        a,
+        b,
+        check: neq_fn,
+        desc: "!=",
+    }
 }
 
 /// Helper: binary constraint for 'equal'.
 pub fn eq(a: usize, b: usize) -> Constraint {
-    Constraint::Binary { a, b, check: eq_fn, desc: "==" }
+    Constraint::Binary {
+        a,
+        b,
+        check: eq_fn,
+        desc: "==",
+    }
 }
 
 /// Helper: binary constraint for 'less than'.
 pub fn lt(a: usize, b: usize) -> Constraint {
-    Constraint::Binary { a, b, check: lt_fn, desc: "<" }
+    Constraint::Binary {
+        a,
+        b,
+        check: lt_fn,
+        desc: "<",
+    }
 }

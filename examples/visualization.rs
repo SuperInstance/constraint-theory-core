@@ -6,8 +6,8 @@
 //! Run with: cargo run --release --example visualization
 
 use constraint_theory_core::manifold::PythagoreanManifold;
-use constraint_theory_core::tile::Tile;
 use constraint_theory_core::percolation::FastPercolation;
+use constraint_theory_core::tile::Tile;
 
 fn main() {
     println!("================================================");
@@ -54,7 +54,11 @@ fn main() {
         let degrees = angle * 180.0 / std::f32::consts::PI;
         println!(
             "  {:2}. {:.1}° -> ({:.3}, {:.3}) | noise = {:.4}",
-            i + 1, degrees, snapped[0], snapped[1], noise
+            i + 1,
+            degrees,
+            snapped[0],
+            snapped[1],
+            noise
         );
     }
 
@@ -63,11 +67,7 @@ fn main() {
     println!("--------------------------\n");
 
     // Create tiles with different constraints
-    let tiles = [
-        Tile::new(0),
-        Tile::new(1),
-        Tile::new(2),
-    ];
+    let tiles = [Tile::new(0), Tile::new(1), Tile::new(2)];
 
     println!("Tile constraints for rendering:");
     for (i, tile) in tiles.iter().enumerate() {
@@ -85,8 +85,17 @@ fn main() {
 
     // Analyze structural rigidity using Laman's theorem
     let n_vertices = 6;
-    let edges = [(0, 1), (1, 2), (2, 3), (3, 4), (4, 5),
-                 (5, 0), (0, 2), (2, 4), (1, 3)];  // 9 edges
+    let edges = [
+        (0, 1),
+        (1, 2),
+        (2, 3),
+        (3, 4),
+        (4, 5),
+        (5, 0),
+        (0, 2),
+        (2, 4),
+        (1, 3),
+    ]; // 9 edges
 
     let mut percolation = FastPercolation::new(n_vertices);
     let result = percolation.compute_rigidity(&edges, n_vertices);
@@ -102,7 +111,10 @@ fn main() {
     if result.is_rigid {
         println!("  ✓ Structure is rigid (Laman's theorem satisfied)");
     } else {
-        println!("  ✗ Structure is flexible (deficiency = {})", result.deficiency);
+        println!(
+            "  ✗ Structure is flexible (deficiency = {})",
+            result.deficiency
+        );
     }
 
     // Example 5: Symmetry Detection
@@ -129,14 +141,17 @@ fn main() {
     }
 
     // Check if all snapped to same magnitude
-    let magnitudes: Vec<f32> = snapped_dirs.iter()
+    let magnitudes: Vec<f32> = snapped_dirs
+        .iter()
         .map(|(v, _)| (v[0].powi(2) + v[1].powi(2)).sqrt())
         .collect();
 
-    let all_equal = magnitudes.windows(2)
-        .all(|w| (w[0] - w[1]).abs() < 0.01);
+    let all_equal = magnitudes.windows(2).all(|w| (w[0] - w[1]).abs() < 0.01);
 
-    println!("\n  4-fold symmetry: {}", if all_equal { "✓ Yes" } else { "✗ No" });
+    println!(
+        "\n  4-fold symmetry: {}",
+        if all_equal { "✓ Yes" } else { "✗ No" }
+    );
 
     // Example 6: Color Quantization
     println!("\n\nExample 6: Color Quantization (RGB to 2D)");

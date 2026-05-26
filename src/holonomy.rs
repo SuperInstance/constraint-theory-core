@@ -63,12 +63,12 @@ impl HolonomyResult {
     pub fn is_identity(&self) -> bool {
         self.is_identity
     }
-    
+
     /// Check if the holonomy is within a custom tolerance.
     pub fn is_within_tolerance(&self, tolerance: f64) -> bool {
         self.norm < tolerance
     }
-    
+
     /// Get the angular deviation from identity (in radians).
     pub fn angular_deviation(&self) -> f64 {
         // Extract angle from rotation matrix
@@ -134,7 +134,7 @@ fn deviation_from_identity(matrix: &RotationMatrix) -> f64 {
 /// ```
 pub fn compute_holonomy(cycle: &[RotationMatrix]) -> HolonomyResult {
     let tolerance = 1e-6;
-    
+
     if cycle.is_empty() {
         return HolonomyResult {
             matrix: identity_matrix(),
@@ -144,26 +144,26 @@ pub fn compute_holonomy(cycle: &[RotationMatrix]) -> HolonomyResult {
             tolerance,
         };
     }
-    
+
     // Compute product of all rotations around the cycle
     let mut product = identity_matrix();
     for rotation in cycle {
         product = matrix_multiply(&product, rotation);
     }
-    
+
     // Compute norm of deviation from identity
     let norm = deviation_from_identity(&product);
-    
+
     // Compute information: I = -log|Hol(γ)|
     let information = if norm > 0.0 {
         -norm.log2()
     } else {
         f64::INFINITY
     };
-    
+
     // Check if identity within tolerance
     let is_identity = norm < tolerance;
-    
+
     HolonomyResult {
         matrix: product,
         norm,
@@ -222,9 +222,9 @@ pub fn compute_edge_holonomy(edges: &[RotationMatrix], closed: bool) -> Holonomy
     if edges.is_empty() {
         return compute_holonomy(&[]);
     }
-    
+
     let mut cycle = edges.to_vec();
-    
+
     // If not explicitly closed, add the inverse of the first transformation
     // to close the loop
     if !closed && edges.len() > 1 {
@@ -233,7 +233,7 @@ pub fn compute_edge_holonomy(edges: &[RotationMatrix], closed: bool) -> Holonomy
         let inverse = transpose(first);
         cycle.push(inverse);
     }
-    
+
     compute_holonomy(&cycle)
 }
 
@@ -274,23 +274,27 @@ impl HolonomyChecker {
             tolerance,
         }
     }
-    
+
     /// Create a checker with default tolerance.
     pub fn default_tolerance() -> Self {
         Self::new(1e-6)
     }
-    
+
     /// Apply a transformation step.
     pub fn apply(&mut self, rotation: &RotationMatrix) {
         self.accumulated = matrix_multiply(&self.accumulated, rotation);
         self.step_count += 1;
     }
-    
+
     /// Check current holonomy without closing the cycle.
     pub fn check_partial(&self) -> HolonomyResult {
         let norm = deviation_from_identity(&self.accumulated);
-        let information = if norm > 0.0 { -norm.log2() } else { f64::INFINITY };
-        
+        let information = if norm > 0.0 {
+            -norm.log2()
+        } else {
+            f64::INFINITY
+        };
+
         HolonomyResult {
             matrix: self.accumulated,
             norm,
@@ -299,7 +303,7 @@ impl HolonomyChecker {
             tolerance: self.tolerance,
         }
     }
-    
+
     /// Close the cycle and check holonomy.
     ///
     /// This applies the inverse transformation to return to the start.
@@ -309,13 +313,13 @@ impl HolonomyChecker {
         let cycle = vec![self.accumulated, inverse];
         compute_holonomy(&cycle)
     }
-    
+
     /// Reset to initial state.
     pub fn reset(&mut self) {
         self.accumulated = identity_matrix();
         self.step_count = 0;
     }
-    
+
     /// Get the number of steps applied.
     pub fn step_count(&self) -> usize {
         self.step_count
@@ -326,33 +330,21 @@ impl HolonomyChecker {
 pub fn rotation_x(angle: f64) -> RotationMatrix {
     let c = angle.cos();
     let s = angle.sin();
-    [
-        [1.0, 0.0, 0.0],
-        [0.0, c, -s],
-        [0.0, s, c],
-    ]
+    [[1.0, 0.0, 0.0], [0.0, c, -s], [0.0, s, c]]
 }
 
 /// Generate a rotation matrix around the Y axis.
 pub fn rotation_y(angle: f64) -> RotationMatrix {
     let c = angle.cos();
     let s = angle.sin();
-    [
-        [c, 0.0, s],
-        [0.0, 1.0, 0.0],
-        [-s, 0.0, c],
-    ]
+    [[c, 0.0, s], [0.0, 1.0, 0.0], [-s, 0.0, c]]
 }
 
 /// Generate a rotation matrix around the Z axis.
 pub fn rotation_z(angle: f64) -> RotationMatrix {
     let c = angle.cos();
     let s = angle.sin();
-    [
-        [c, -s, 0.0],
-        [s, c, 0.0],
-        [0.0, 0.0, 1.0],
-    ]
+    [[c, -s, 0.0], [s, c, 0.0], [0.0, 0.0, 1.0]]
 }
 
 /// Generate a rotation matrix from Euler angles (ZYX convention).
@@ -360,7 +352,7 @@ pub fn rotation_from_euler(roll: f64, pitch: f64, yaw: f64) -> RotationMatrix {
     let rx = rotation_x(roll);
     let ry = rotation_y(pitch);
     let rz = rotation_z(yaw);
-    
+
     // ZYX convention: R = Rz * Ry * Rx
     let ry_rx = matrix_multiply(&ry, &rx);
     matrix_multiply(&rz, &ry_rx)
@@ -377,12 +369,16 @@ pub fn rotation_from_euler(roll: f64, pitch: f64, yaw: f64) -> RotationMatrix {
 /// # Returns
 ///
 /// HolonomyResult for the closed triangle
-pub fn triangular_holonomy(a: &RotationMatrix, b: &RotationMatrix, c: &RotationMatrix) -> HolonomyResult {
+pub fn triangular_holonomy(
+    a: &RotationMatrix,
+    b: &RotationMatrix,
+    c: &RotationMatrix,
+) -> HolonomyResult {
     // Compute a -> b -> c -> a (implicitly closed)
     let ab = matrix_multiply(a, &transpose(b));
     let bc = matrix_multiply(b, &transpose(c));
     let ca = matrix_multiply(c, &transpose(a));
-    
+
     let cycle = vec![ab, bc, ca];
     compute_holonomy(&cycle)
 }
@@ -411,13 +407,17 @@ mod tests {
         // 90-degree rotations around different axes
         let rx = rotation_x(std::f64::consts::FRAC_PI_2);
         let ry = rotation_y(std::f64::consts::FRAC_PI_2);
-        
+
         // A cycle that returns to identity
         let cycle = vec![rx.clone(), ry.clone(), ry.clone(), rx.clone()];
         let result = compute_holonomy(&cycle);
-        
+
         // Should be close to identity (allowing numerical error)
-        assert!(result.norm < 3.5, "Holonomy norm should be small, got {}", result.norm);
+        assert!(
+            result.norm < 3.5,
+            "Holonomy norm should be small, got {}",
+            result.norm
+        );
     }
 
     #[test]
@@ -426,9 +426,12 @@ mod tests {
         let rz = rotation_z(std::f64::consts::PI);
         let cycle = vec![rz.clone(), rz];
         let result = compute_holonomy(&cycle);
-        
+
         // Should be identity (within numerical tolerance)
-        assert!(result.norm < 0.01, "Full rotation should return to identity");
+        assert!(
+            result.norm < 0.01,
+            "Full rotation should return to identity"
+        );
     }
 
     #[test]
@@ -451,10 +454,10 @@ mod tests {
     #[test]
     fn test_holonomy_checker() {
         let mut checker = HolonomyChecker::default_tolerance();
-        
+
         checker.apply(&identity_matrix());
         checker.apply(&identity_matrix());
-        
+
         let result = checker.check_closed();
         assert!(result.is_identity());
         assert_eq!(checker.step_count(), 2);
@@ -463,13 +466,13 @@ mod tests {
     #[test]
     fn test_holonomy_checker_reset() {
         let mut checker = HolonomyChecker::default_tolerance();
-        
+
         checker.apply(&rotation_x(0.1));
         assert_eq!(checker.step_count(), 1);
-        
+
         checker.reset();
         assert_eq!(checker.step_count(), 0);
-        
+
         let result = checker.check_partial();
         assert!(result.is_identity());
     }
@@ -479,7 +482,7 @@ mod tests {
         // Zero rotation should be identity
         let r = rotation_from_euler(0.0, 0.0, 0.0);
         let id = identity_matrix();
-        
+
         for i in 0..3 {
             for j in 0..3 {
                 assert!((r[i][j] - id[i][j]).abs() < 1e-10);
@@ -492,7 +495,7 @@ mod tests {
         let a = identity_matrix();
         let b = identity_matrix();
         let c = identity_matrix();
-        
+
         let result = triangular_holonomy(&a, &b, &c);
         assert!(result.is_identity());
     }
@@ -501,19 +504,23 @@ mod tests {
     fn test_angular_deviation() {
         let result = compute_holonomy(&[identity_matrix()]);
         assert_eq!(result.angular_deviation(), 0.0);
-        
+
         // 90-degree rotation
         let rz = rotation_z(std::f64::consts::FRAC_PI_2);
         let result = compute_holonomy(&[rz]);
         let deviation = result.angular_deviation();
-        assert!(deviation > 1.4 && deviation < 1.6, "Expected ~π/2, got {}", deviation);
+        assert!(
+            deviation > 1.4 && deviation < 1.6,
+            "Expected ~π/2, got {}",
+            deviation
+        );
     }
 
     #[test]
     fn test_information_content() {
         let result = compute_holonomy(&[identity_matrix()]);
         assert!(result.information.is_infinite());
-        
+
         // Non-identity should have finite information
         let rz = rotation_z(0.1);
         let result = compute_holonomy(&[rz]);
@@ -524,10 +531,10 @@ mod tests {
     fn test_matrix_multiply() {
         let a = rotation_x(std::f64::consts::FRAC_PI_2);
         let b = rotation_x(-std::f64::consts::FRAC_PI_2);
-        
+
         let ab = matrix_multiply(&a, &b);
         let id = identity_matrix();
-        
+
         for i in 0..3 {
             for j in 0..3 {
                 assert!((ab[i][j] - id[i][j]).abs() < 1e-10);
@@ -540,7 +547,7 @@ mod tests {
         let r = rotation_y(0.5);
         let rt = transpose(&r);
         let product = matrix_multiply(&r, &rt);
-        
+
         // R * R^T should be identity
         let id = identity_matrix();
         for i in 0..3 {

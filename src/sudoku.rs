@@ -1,7 +1,6 @@
 #![allow(missing_docs)]
 
 /// 9x9 Sudoku solver using AC-3 + MRV + FC pipeline.
-
 use crate::backtracking;
 pub use crate::csp::SolverStats;
 use crate::csp::{Constraint, ConstraintProblem, SolverConfig, Variable};
@@ -66,7 +65,12 @@ pub fn solve_sudoku_with_stats(input: &str) -> (Option<String>, SolverStats) {
     use std::time::Instant;
 
     let p = sudoku9x9_problem(input);
-    let config = SolverConfig { use_mrv: true, use_lcv: false, use_forward_checking: true, use_ac3: true };
+    let config = SolverConfig {
+        use_mrv: true,
+        use_lcv: false,
+        use_forward_checking: true,
+        use_ac3: true,
+    };
 
     let start = Instant::now();
     let (result, mut stats) = backtracking::solve_with_stats(&p, &config);
@@ -109,7 +113,8 @@ mod tests {
     #[test]
     fn test_solve_easy() {
         // 55-given solvable puzzle (verified)
-        let input = "534..891267.1..34.1983425.....7.14..4.685.79..13924856.615372842.7419.35..52.61..";
+        let input =
+            "534..891267.1..34.1983425.....7.14..4.685.79..13924856.615372842.7419.35..52.61..";
         assert_eq!(input.len(), 81, "Test input must be 81 chars");
         let result = solve_sudoku(input);
         assert!(result.is_some());
@@ -119,12 +124,11 @@ mod tests {
     }
 
     #[test]
-
-
     #[test]
     fn test_unsat() {
         // Verify solver format with a fast-solvable board (30+ givens)
-        let input = "534678912672195348198342567859761423426853791713924856961537284287419635345286179";
+        let input =
+            "534678912672195348198342567859761423426853791713924856961537284287419635345286179";
         // Board has 0 empty — already solved
         let result = solve_sudoku(input);
         assert!(result.is_some());
@@ -133,7 +137,8 @@ mod tests {
     #[test]
     fn test_solve_easy_54_given() {
         // 54-given solvable puzzle
-        let input = "53.67.91.6.21.53.8.98.42.6785.76.42.4.68.37.1.13.24.5696.53.28.2.74.96.5.45.86.79";
+        let input =
+            "53.67.91.6.21.53.8.98.42.6785.76.42.4.68.37.1.13.24.5696.53.28.2.74.96.5.45.86.79";
         assert_eq!(input.len(), 81);
         let result = solve_sudoku(input);
         assert!(result.is_some());
@@ -145,7 +150,8 @@ mod tests {
     #[test]
     fn test_stats_55_given() {
         // 55-given solvable puzzle — AC-3 may solve fully, nodes_visited may be 0
-        let input = "534..891267.1..34.1983425.....7.14..4.685.79..13924856.615372842.7419.35..52.61..";
+        let input =
+            "534..891267.1..34.1983425.....7.14..4.685.79..13924856.615372842.7419.35..52.61..";
         assert_eq!(input.len(), 81, "Test input must be 81 chars");
         let (result, stats) = solve_sudoku_with_stats(input);
         assert!(result.is_some());
@@ -154,7 +160,8 @@ mod tests {
 
     #[test]
     fn test_format() {
-        let input = "123456789456789123789123456214365897365897214897214365531642978642978531978531642";
+        let input =
+            "123456789456789123789123456214365897365897214897214365531642978642978531978531642";
         let formatted = format_sudoku(input);
         assert!(formatted.contains('|'));
         assert!(formatted.contains("------"));

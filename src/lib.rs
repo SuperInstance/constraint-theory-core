@@ -135,8 +135,12 @@
 #![warn(unused_extern_crates)]
 #![warn(clippy::all)]
 
+pub mod ac3;
+pub mod backtracking;
 pub mod cache;
+pub mod cdcl;
 pub mod cohomology;
+pub mod csp;
 pub mod curvature;
 pub mod gauge;
 pub mod hidden_dimensions;
@@ -144,21 +148,17 @@ pub mod holonomy;
 pub mod kdtree;
 pub mod manifold;
 pub mod percolation;
+pub mod puzzle;
 pub mod quantizer;
 pub mod simd;
-pub mod tile;
-pub mod csp;
-pub mod ac3;
-pub mod backtracking;
-pub mod cdcl;
-pub mod puzzle;
 pub mod sudoku;
+pub mod tile;
 
 #[cfg(test)]
 mod edge_case_tests;
 
 // Re-export key types
-pub use cache::{CachedLattice, LatticeCache, global_cache, clear_global_cache};
+pub use cache::{clear_global_cache, global_cache, CachedLattice, LatticeCache};
 pub use curvature::{ricci_flow_step, RicciFlow};
 pub use hidden_dimensions::{
     hidden_dim_count, holographic_accuracy, lift_to_hidden, precision_from_hidden_dims,
@@ -390,12 +390,21 @@ mod tests {
     fn test_cterr_actionable_messages() {
         // Verify error messages contain actionable guidance
         let zero_msg = CTErr::ZeroVector.to_string();
-        assert!(zero_msg.contains("Provide"), "Error message should suggest action");
-        
+        assert!(
+            zero_msg.contains("Provide"),
+            "Error message should suggest action"
+        );
+
         let nan_msg = CTErr::NaNInput.to_string();
-        assert!(nan_msg.contains("Ensure"), "Error message should suggest action");
-        
+        assert!(
+            nan_msg.contains("Ensure"),
+            "Error message should suggest action"
+        );
+
         let density_msg = CTErr::InvalidDensity.to_string();
-        assert!(density_msg.contains("Recommended"), "Error message should provide guidance");
+        assert!(
+            density_msg.contains("Recommended"),
+            "Error message should provide guidance"
+        );
     }
 }

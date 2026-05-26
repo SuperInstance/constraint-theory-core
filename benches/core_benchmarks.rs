@@ -20,7 +20,9 @@
 //! cargo bench -- holonomy
 //! ```
 
-use criterion::{black_box, criterion_group, criterion_main, BatchSize, BenchmarkId, Criterion, Throughput};
+use criterion::{
+    black_box, criterion_group, criterion_main, BatchSize, BenchmarkId, Criterion, Throughput,
+};
 
 use constraint_theory_core::{
     hidden_dimensions::{hidden_dim_count, lift_to_hidden, HiddenDimensionConfig},
@@ -45,9 +47,7 @@ fn bench_manifold_snap(c: &mut Criterion) {
             BenchmarkId::new("density", density),
             &manifold,
             |b, manifold| {
-                b.iter(|| {
-                    black_box(manifold.snap(black_box([0.6, 0.8])))
-                });
+                b.iter(|| black_box(manifold.snap(black_box([0.6, 0.8]))));
             },
         );
     }
@@ -74,9 +74,7 @@ fn bench_manifold_batch(c: &mut Criterion) {
             BenchmarkId::new("simd_batch", batch_size),
             &vectors,
             |b, vectors| {
-                b.iter(|| {
-                    black_box(manifold.snap_batch_simd(black_box(vectors)))
-                });
+                b.iter(|| black_box(manifold.snap_batch_simd(black_box(vectors))));
             },
         );
 
@@ -105,9 +103,7 @@ fn bench_manifold_construction(c: &mut Criterion) {
             BenchmarkId::new("build", density),
             &density,
             |b, &density| {
-                b.iter(|| {
-                    black_box(PythagoreanManifold::new(black_box(density)))
-                });
+                b.iter(|| black_box(PythagoreanManifold::new(black_box(density))));
             },
         );
     }
@@ -124,12 +120,8 @@ fn bench_quantizer_modes(c: &mut Criterion) {
 
     // Generate test data
     let data_4d = vec![0.6, 0.8, 0.0, 0.0];
-    let data_128d: Vec<f64> = (0..128)
-        .map(|i| ((i as f64 + 1.0) / 129.0).sin())
-        .collect();
-    let data_512d: Vec<f64> = (0..512)
-        .map(|i| ((i as f64 + 1.0) / 513.0).sin())
-        .collect();
+    let data_128d: Vec<f64> = (0..128).map(|i| ((i as f64 + 1.0) / 129.0).sin()).collect();
+    let data_512d: Vec<f64> = (0..512).map(|i| ((i as f64 + 1.0) / 513.0).sin()).collect();
 
     let modes = [
         ("ternary", QuantizationMode::Ternary),
@@ -146,9 +138,7 @@ fn bench_quantizer_modes(c: &mut Criterion) {
             BenchmarkId::new(format!("{}_4d", name), 0),
             &data_4d,
             |b, data| {
-                b.iter(|| {
-                    black_box(quantizer.quantize(black_box(data)))
-                });
+                b.iter(|| black_box(quantizer.quantize(black_box(data))));
             },
         );
 
@@ -157,9 +147,7 @@ fn bench_quantizer_modes(c: &mut Criterion) {
             BenchmarkId::new(format!("{}_128d", name), 0),
             &data_128d,
             |b, data| {
-                b.iter(|| {
-                    black_box(quantizer.quantize(black_box(data)))
-                });
+                b.iter(|| black_box(quantizer.quantize(black_box(data))));
             },
         );
 
@@ -168,9 +156,7 @@ fn bench_quantizer_modes(c: &mut Criterion) {
             BenchmarkId::new(format!("{}_512d", name), 0),
             &data_512d,
             |b, data| {
-                b.iter(|| {
-                    black_box(quantizer.quantize(black_box(data)))
-                });
+                b.iter(|| black_box(quantizer.quantize(black_box(data))));
             },
         );
     }
@@ -196,9 +182,7 @@ fn bench_quantizer_batch(c: &mut Criterion) {
             BenchmarkId::new("batch", batch_size),
             &vectors,
             |b, vectors| {
-                b.iter(|| {
-                    black_box(quantizer.quantize_batch(black_box(vectors)))
-                });
+                b.iter(|| black_box(quantizer.quantize_batch(black_box(vectors))));
             },
         );
     }
@@ -220,9 +204,7 @@ fn bench_hidden_dim_count(c: &mut Criterion) {
             BenchmarkId::new("count", format!("1e{}", -epsilon.log10() as i32)),
             &epsilon,
             |b, &epsilon| {
-                b.iter(|| {
-                    black_box(hidden_dim_count(black_box(epsilon)))
-                });
+                b.iter(|| black_box(hidden_dim_count(black_box(epsilon))));
             },
         );
     }
@@ -236,15 +218,9 @@ fn bench_lift_to_hidden(c: &mut Criterion) {
     let point = vec![0.6, 0.8, 0.0, 0.0];
 
     for k in [4, 10, 20, 34] {
-        group.bench_with_input(
-            BenchmarkId::new("k_dims", k),
-            &k,
-            |b, &k| {
-                b.iter(|| {
-                    black_box(lift_to_hidden(black_box(&point), black_box(k)))
-                });
-            },
-        );
+        group.bench_with_input(BenchmarkId::new("k_dims", k), &k, |b, &k| {
+            b.iter(|| black_box(lift_to_hidden(black_box(&point), black_box(k))));
+        });
     }
 
     group.finish();
@@ -253,11 +229,7 @@ fn bench_lift_to_hidden(c: &mut Criterion) {
 fn bench_hidden_dim_encoding(c: &mut Criterion) {
     let mut group = c.benchmark_group("hidden_dim_encoding");
 
-    let points: Vec<Vec<f64>> = vec![
-        vec![0.6, 0.8],
-        vec![0.707, 0.707],
-        vec![0.5, 0.866],
-    ];
+    let points: Vec<Vec<f64>> = vec![vec![0.6, 0.8], vec![0.707, 0.707], vec![0.5, 0.866]];
 
     for epsilon in [1e-4, 1e-6, 1e-10] {
         let config = HiddenDimensionConfig::new(epsilon);
@@ -301,9 +273,7 @@ fn bench_holonomy_compute(c: &mut Criterion) {
             BenchmarkId::new("cycle_len", cycle_len),
             &cycle,
             |b, cycle| {
-                b.iter(|| {
-                    black_box(compute_holonomy(black_box(cycle)))
-                });
+                b.iter(|| black_box(compute_holonomy(black_box(cycle))));
             },
         );
     }
@@ -355,23 +325,17 @@ fn bench_full_pipeline(c: &mut Criterion) {
     let config = HiddenDimensionConfig::new(1e-6);
 
     group.bench_function("snap_only", |b| {
-        b.iter(|| {
-            black_box(manifold.snap(black_box([0.6, 0.8])))
-        });
+        b.iter(|| black_box(manifold.snap(black_box([0.6, 0.8]))));
     });
 
     group.bench_function("quantize_only", |b| {
         let data = vec![0.6, 0.8, 0.0, 0.0];
-        b.iter(|| {
-            black_box(quantizer.quantize(black_box(&data)))
-        });
+        b.iter(|| black_box(quantizer.quantize(black_box(&data))));
     });
 
     group.bench_function("encode_only", |b| {
         let point = vec![0.6, 0.8];
-        b.iter(|| {
-            black_box(config.encode(black_box(&point)))
-        });
+        b.iter(|| black_box(config.encode(black_box(&point))));
     });
 
     group.bench_function("full_encoding_pipeline", |b| {

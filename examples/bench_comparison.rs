@@ -242,7 +242,11 @@ fn generate_pythagorean_points(density: usize) -> Vec<Point> {
 }
 
 fn gcd(a: usize, b: usize) -> usize {
-    if b == 0 { a } else { gcd(b, a % b) }
+    if b == 0 {
+        a
+    } else {
+        gcd(b, a % b)
+    }
 }
 
 /// Benchmark harness
@@ -327,24 +331,21 @@ fn main() {
         );
 
         // Print results
-        println!("\n{:<25} {:>12} {:>15} {:>12}", "Method", "Time/op (ns)", "Ops/sec", "Speedup");
+        println!(
+            "\n{:<25} {:>12} {:>15} {:>12}",
+            "Method", "Time/op (ns)", "Ops/sec", "Speedup"
+        );
         println!("{}", "-".repeat(66));
 
         println!(
             "{:<25} {:>12.2} {:>15.0} {:>12}",
-            brute_result.name,
-            brute_result.per_op_ns,
-            brute_result.throughput,
-            "1.0x"
+            brute_result.name, brute_result.per_op_ns, brute_result.throughput, "1.0x"
         );
 
         let kdtree_speedup = brute_result.per_op_ns / kdtree_result.per_op_ns;
         println!(
             "{:<25} {:>12.2} {:>15.0} {:>12.1}x",
-            kdtree_result.name,
-            kdtree_result.per_op_ns,
-            kdtree_result.throughput,
-            kdtree_speedup
+            kdtree_result.name, kdtree_result.per_op_ns, kdtree_result.throughput, kdtree_speedup
         );
 
         // Verify correctness
@@ -354,11 +355,20 @@ fn main() {
         let (kd_idx, kd_dist) = kd_tree.nearest(&test_query).unwrap_or((0, 0.0));
 
         if brute_idx == kd_idx {
-            println!("  [PASS] KD-tree matches brute force result (index: {})", brute_idx);
+            println!(
+                "  [PASS] KD-tree matches brute force result (index: {})",
+                brute_idx
+            );
         } else if (brute_dist - kd_dist).abs() < 0.0001 {
-            println!("  [PASS] KD-tree finds equivalent point (dist: {})", kd_dist);
+            println!(
+                "  [PASS] KD-tree finds equivalent point (dist: {})",
+                kd_dist
+            );
         } else {
-            println!("  [WARN] Results differ: brute={}, kdtree={}", brute_idx, kd_idx);
+            println!(
+                "  [WARN] Results differ: brute={}, kdtree={}",
+                brute_idx, kd_idx
+            );
         }
 
         println!("\n");
@@ -372,7 +382,10 @@ fn main() {
     println!("{:<30} {:>15} {:>15}", "Method", "Time", "Space");
     println!("{}", "-".repeat(60));
     println!("{:<30} {:>15} {:>15}", "Brute Force", "O(n)", "O(1)");
-    println!("{:<30} {:>15} {:>15}", "KD-tree (average)", "O(log n)", "O(n)");
+    println!(
+        "{:<30} {:>15} {:>15}",
+        "KD-tree (average)", "O(log n)", "O(n)"
+    );
     println!("{:<30} {:>15} {:>15}", "KD-tree (worst)", "O(n)", "O(n)");
 
     println!("\nExpected speedup for n points:");

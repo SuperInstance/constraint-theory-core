@@ -55,8 +55,10 @@ fn main() {
         let original_norm: f64 = v.iter().map(|x| x * x).sum::<f64>().sqrt();
         let quantized_norm = result.norm();
 
-        println!("Original norm: {:.4} -> Quantized norm: {:.4} (preserved: {})",
-                 original_norm, quantized_norm, result.unit_norm_preserved);
+        println!(
+            "Original norm: {:.4} -> Quantized norm: {:.4} (preserved: {})",
+            original_norm, quantized_norm, result.unit_norm_preserved
+        );
     }
     println!();
 
@@ -98,8 +100,14 @@ fn main() {
         let (snapped, num, den) = quantizer.snap_to_lattice(value, 50);
         let rational = Rational::new(num, den);
 
-        println!("Value {:.4} -> {}/{} = {:.4} (is_pythagorean: {})",
-                 value, num, den, snapped, rational.is_pythagorean());
+        println!(
+            "Value {:.4} -> {}/{} = {:.4} (is_pythagorean: {})",
+            value,
+            num,
+            den,
+            snapped,
+            rational.is_pythagorean()
+        );
     }
     println!();
 
@@ -118,8 +126,10 @@ fn main() {
 
     println!("Batch quantized {} vectors:", results.len());
     for (i, result) in results.iter().enumerate() {
-        println!("  {}: MSE = {:.6}, unit_norm = {}", 
-                 i, result.mse, result.unit_norm_preserved);
+        println!(
+            "  {}: MSE = {:.6}, unit_norm = {}",
+            i, result.mse, result.unit_norm_preserved
+        );
     }
     println!();
 
@@ -132,11 +142,18 @@ fn main() {
 
     // Snap with manifold
     let (manifold_snapped, manifold_noise) = manifold.snap(point);
-    println!("Manifold snap: {:?} (noise: {:.4})", manifold_snapped, manifold_noise);
+    println!(
+        "Manifold snap: {:?} (noise: {:.4})",
+        manifold_snapped, manifold_noise
+    );
 
     // Quantize
     let result = quantizer.quantize(&[point[0] as f64, point[1] as f64]);
-    println!("Quantized:     {:?} (norm: {:.4})", &result.data[..2], result.norm());
+    println!(
+        "Quantized:     {:?} (norm: {:.4})",
+        &result.data[..2],
+        result.norm()
+    );
     println!();
 
     // Example 8: Factory methods
@@ -160,8 +177,12 @@ fn main() {
         let quantizer = PythagoreanQuantizer::new(QuantizationMode::Turbo, bits);
         let result = quantizer.quantize(&original);
 
-        println!("{:2} bits: MSE = {:.6}, levels = {}", 
-                 bits, result.mse, 1 << bits);
+        println!(
+            "{:2} bits: MSE = {:.6}, levels = {}",
+            bits,
+            result.mse,
+            1 << bits
+        );
     }
 
     println!("\n=== Quantizer Example Complete ===");
