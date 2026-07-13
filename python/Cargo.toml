@@ -1,6 +1,6 @@
 [package]
 name = "constraint-theory-python"
-version = "2.2.0"
+version = "0.1.0"
 edition = "2021"
 description = "Python bindings for constraint-theory-core"
 
