@@ -11,9 +11,7 @@
 // Top-level imports used by cross_module tests below
 #[allow(unused_imports)]
 use constraint_theory_core::{
-    cohomology::FastCohomology,
-    curvature::RicciFlow,
-    percolation::FastPercolation,
+    cohomology::FastCohomology, curvature::RicciFlow, percolation::FastPercolation,
 };
 
 // ============================================================================
@@ -22,8 +20,8 @@ use constraint_theory_core::{
 
 mod csp_tests {
     use constraint_theory_core::csp::{
-        eq, eq_fn, lt, lt_fn, neq, neq_fn, Constraint, ConstraintProblem,
-        SolverConfig, SolverStats, Variable,
+        eq, eq_fn, lt, lt_fn, neq, neq_fn, Constraint, ConstraintProblem, SolverConfig,
+        SolverStats, Variable,
     };
 
     #[test]
@@ -106,10 +104,7 @@ mod csp_tests {
 
     #[test]
     fn test_problem_new_and_var_index() {
-        let vars = vec![
-            Variable::range("x", 1, 3),
-            Variable::range("y", 1, 3),
-        ];
+        let vars = vec![Variable::range("x", 1, 3), Variable::range("y", 1, 3)];
         let cs = vec![neq(0, 1)];
         let problem = ConstraintProblem::new(vars, cs);
 
@@ -139,10 +134,7 @@ mod csp_tests {
 
     #[test]
     fn test_is_consistent_binary_neq() {
-        let vars = vec![
-            Variable::range("x", 1, 3),
-            Variable::range("y", 1, 3),
-        ];
+        let vars = vec![Variable::range("x", 1, 3), Variable::range("y", 1, 3)];
         let cs = vec![neq(0, 1)];
         let problem = ConstraintProblem::new(vars, cs);
 
@@ -153,10 +145,7 @@ mod csp_tests {
 
     #[test]
     fn test_is_consistent_partial_assignment() {
-        let vars = vec![
-            Variable::range("x", 1, 3),
-            Variable::range("y", 1, 3),
-        ];
+        let vars = vec![Variable::range("x", 1, 3), Variable::range("y", 1, 3)];
         let cs = vec![neq(0, 1)];
         let problem = ConstraintProblem::new(vars, cs);
 
@@ -166,10 +155,7 @@ mod csp_tests {
 
     #[test]
     fn test_is_satisfied_full_assignment() {
-        let vars = vec![
-            Variable::range("x", 1, 3),
-            Variable::range("y", 1, 3),
-        ];
+        let vars = vec![Variable::range("x", 1, 3), Variable::range("y", 1, 3)];
         let cs = vec![neq(0, 1)];
         let problem = ConstraintProblem::new(vars, cs);
 
@@ -183,9 +169,15 @@ mod csp_tests {
 
     #[test]
     fn test_is_satisfied_unary_constraint() {
-        fn positive(x: i64) -> bool { x > 0 }
+        fn positive(x: i64) -> bool {
+            x > 0
+        }
         let vars = vec![Variable::range("x", -3, 3)];
-        let cs = vec![Constraint::Unary { var: 0, check: positive, desc: "positive" }];
+        let cs = vec![Constraint::Unary {
+            var: 0,
+            check: positive,
+            desc: "positive",
+        }];
         let problem = ConstraintProblem::new(vars, cs);
 
         use std::collections::HashMap;
@@ -198,13 +190,16 @@ mod csp_tests {
 
     #[test]
     fn test_is_satisfied_nary_constraint() {
-        let vars = vec![
-            Variable::range("x", 1, 5),
-            Variable::range("y", 1, 5),
-        ];
+        let vars = vec![Variable::range("x", 1, 5), Variable::range("y", 1, 5)];
         // Sum must be even
-        fn sum_even(vals: &[i64]) -> bool { vals.iter().sum::<i64>() % 2 == 0 }
-        let cs = vec![Constraint::Nary { vars: vec![0, 1], check: sum_even, desc: "even_sum" }];
+        fn sum_even(vals: &[i64]) -> bool {
+            vals.iter().sum::<i64>() % 2 == 0
+        }
+        let cs = vec![Constraint::Nary {
+            vars: vec![0, 1],
+            check: sum_even,
+            desc: "even_sum",
+        }];
         let problem = ConstraintProblem::new(vars, cs);
 
         use std::collections::HashMap;
@@ -374,7 +369,11 @@ mod curvature_tests {
         rf.evolve(&mut curvatures, 20);
 
         for &c in &curvatures {
-            assert!((c - 1.0).abs() < 0.01, "Should converge to target=1.0, got {}", c);
+            assert!(
+                (c - 1.0).abs() < 0.01,
+                "Should converge to target=1.0, got {}",
+                c
+            );
         }
     }
 
@@ -383,7 +382,10 @@ mod curvature_tests {
         let mut rf = RicciFlow::new(0.1, 0.0);
         let mut curvatures = vec![-2.0];
         rf.evolve(&mut curvatures, 50);
-        assert!(curvatures[0].abs() < 0.1, "Negative curvature should converge to 0");
+        assert!(
+            curvatures[0].abs() < 0.1,
+            "Negative curvature should converge to 0"
+        );
     }
 
     #[test]
@@ -541,7 +543,10 @@ mod percolation_tests {
         let mut perc = FastPercolation::new(5);
         let edges = [(0, 1), (1, 2), (3, 4)];
         let result = perc.compute_rigidity(&edges, 5);
-        assert!(!result.is_rigid, "Under-constrained graph should not be rigid");
+        assert!(
+            !result.is_rigid,
+            "Under-constrained graph should not be rigid"
+        );
     }
 
     #[test]
@@ -603,13 +608,20 @@ mod percolation_tests {
 
 mod ac3_tests {
     use constraint_theory_core::ac3::enforce_ac3;
-    use constraint_theory_core::csp::{Constraint, ConstraintProblem, Variable, eq_fn, lt_fn, neq_fn};
+    use constraint_theory_core::csp::{
+        eq_fn, lt_fn, neq_fn, Constraint, ConstraintProblem, Variable,
+    };
 
     #[test]
     fn test_ac3_eq_constraint() {
         // x == y, both in {1,2,3}
         let vars = vec![Variable::range("x", 1, 3), Variable::range("y", 1, 3)];
-        let cs = vec![Constraint::Binary { a: 0, b: 1, check: eq_fn, desc: "==" }];
+        let cs = vec![Constraint::Binary {
+            a: 0,
+            b: 1,
+            check: eq_fn,
+            desc: "==",
+        }];
         let problem = ConstraintProblem::new(vars.clone(), cs);
         let mut domains: Vec<Vec<i64>> = vars.iter().map(|v| v.domain.clone()).collect();
         assert!(enforce_ac3(&problem, &mut domains));
@@ -623,7 +635,12 @@ mod ac3_tests {
         // x < y, x in {1,2,3}, y in {1,2,3}
         // y=1 has no support (no x < 1), so y domain should prune 1
         let vars = vec![Variable::range("x", 1, 3), Variable::range("y", 1, 3)];
-        let cs = vec![Constraint::Binary { a: 0, b: 1, check: lt_fn, desc: "<" }];
+        let cs = vec![Constraint::Binary {
+            a: 0,
+            b: 1,
+            check: lt_fn,
+            desc: "<",
+        }];
         let problem = ConstraintProblem::new(vars.clone(), cs);
         let mut domains: Vec<Vec<i64>> = vars.iter().map(|v| v.domain.clone()).collect();
         assert!(enforce_ac3(&problem, &mut domains));
@@ -641,8 +658,18 @@ mod ac3_tests {
             Variable::range("z", 1, 2),
         ];
         let cs = vec![
-            Constraint::Binary { a: 0, b: 1, check: neq_fn, desc: "!=" },
-            Constraint::Binary { a: 1, b: 2, check: neq_fn, desc: "!=" },
+            Constraint::Binary {
+                a: 0,
+                b: 1,
+                check: neq_fn,
+                desc: "!=",
+            },
+            Constraint::Binary {
+                a: 1,
+                b: 2,
+                check: neq_fn,
+                desc: "!=",
+            },
         ];
         let problem = ConstraintProblem::new(vars.clone(), cs);
         let mut domains: Vec<Vec<i64>> = vars.iter().map(|v| v.domain.clone()).collect();
@@ -663,11 +690,13 @@ mod ac3_tests {
     fn test_ac3_tight_domains() {
         // x != y, x in {1}, y in {1,2}
         // x=1 → y can only be 2
-        let vars = vec![
-            Variable::new("x", vec![1]),
-            Variable::new("y", vec![1, 2]),
-        ];
-        let cs = vec![Constraint::Binary { a: 0, b: 1, check: neq_fn, desc: "!=" }];
+        let vars = vec![Variable::new("x", vec![1]), Variable::new("y", vec![1, 2])];
+        let cs = vec![Constraint::Binary {
+            a: 0,
+            b: 1,
+            check: neq_fn,
+            desc: "!=",
+        }];
         let problem = ConstraintProblem::new(vars.clone(), cs);
         let mut domains: Vec<Vec<i64>> = vars.iter().map(|v| v.domain.clone()).collect();
         assert!(enforce_ac3(&problem, &mut domains));
@@ -681,9 +710,7 @@ mod ac3_tests {
 
 mod cross_module {
     use constraint_theory_core::{
-        cohomology::FastCohomology,
-        curvature::RicciFlow,
-        percolation::FastPercolation,
+        cohomology::FastCohomology, curvature::RicciFlow, percolation::FastPercolation,
     };
 
     #[test]
