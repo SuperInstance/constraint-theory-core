@@ -2,11 +2,9 @@
 
 /// Built-in puzzle definitions and solvers.
 use crate::backtracking;
-use crate::csp::{
-    Constraint, ConstraintProblem, Variable,
-};
 #[cfg(test)]
 use crate::csp::SolverConfig;
+use crate::csp::{Constraint, ConstraintProblem, Variable};
 use std::collections::HashMap;
 
 /// N-Queens diagonal check: |v[i] - v[j]| != |i - j| for all i != j.
